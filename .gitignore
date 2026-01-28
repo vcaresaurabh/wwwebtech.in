@@ -24,5 +24,7 @@ yarn-error.log
 /storage/logs
 /storage/framework
 .devcontainer/
+# Dev-only files
 .devcontainer/
-.devcontainer/
+database/database.sqlite
+node_modules/
