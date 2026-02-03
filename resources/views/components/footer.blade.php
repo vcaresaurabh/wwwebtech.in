@@ -10,6 +10,7 @@
                         src="{{ asset('assets/logos/wwwebtech.svg') }}"
                         alt="Wwwebtech logo"
                         class="h-8"
+                         loading="lazy"
                     />
                 </div>
 
@@ -48,11 +49,11 @@
                     Company
                 </h4>
                 <ul class="space-y-2 text-sm">
-                    <li class="hover:text-accent transition-colors">About Us</li>
+                    <li class="hover:text-accent transition-colors"><a href="{{ route('about') }}">About Us</a></li>
                     <li class="hover:text-accent transition-colors">Careers</li>
                     <li class="hover:text-accent transition-colors">Blog</li>
                     <li class="hover:text-accent transition-colors">Case Studies</li>
-                    <li class="hover:text-accent transition-colors">Contact</li>
+                    <li class="hover:text-accent transition-colors"><a href="{{ route('contact') }}">Contact</a></li>
                 </ul>
             </div>
 

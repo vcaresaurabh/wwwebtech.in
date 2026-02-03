@@ -40,8 +40,9 @@
                 <div class="rounded-xl overflow-hidden">
                     <img
                         src="{{ asset('assets/images/hero-dashboard.png') }}"
-                        alt="System dashboard preview"
-                        class="w-full h-auto object-cover shadow-[0_20px_40px_-20px_rgba(15,23,42,0.25)]" />
+                        alt="Business dashboard interface"
+                        class="w-full h-auto object-cover shadow-[0_20px_40px_-20px_rgba(15,23,42,0.25)]"
+                         loading="lazy" />
                 </div>
             </div>
         </div>
@@ -154,6 +155,7 @@
                     src="{{ asset('assets/images/india-team.png') }}"
                     alt="Team collaborating on technology solutions"
                     class="w-full h-auto object-cover opacity-90"
+                     loading="lazy"
                 />
             </div>
 
@@ -170,7 +172,7 @@
             <div class="rounded-xl overflow-hidden">
                 <img
                     src="{{ asset('assets/images/crm-dashboard.png') }}"
-                    alt="CRM dashboard interface"
+                    alt="CRM system dashboard"
                     class="w-full h-auto object-cover
                            shadow-[0_20px_40px_-20px_rgba(15,23,42,0.25)]"
                 />
