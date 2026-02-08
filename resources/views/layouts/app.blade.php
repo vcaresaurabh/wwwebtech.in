@@ -14,6 +14,24 @@
   <meta property="og:url" content="{{ url()->current() }}">
   <meta property="og:image" content="{{ asset('assets/images/og-image.png') }}">
 
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Wwwebtech",
+      "url": "https://wwwebtech.in",
+      "logo": "https://wwwebtech.in/assets/logos/wwwebtech.svg",
+      "sameAs": [
+        "https://www.linkedin.com/company/wwwebtech/",
+        "https://www.instagram.com/wwwebtech.in/"
+      ],
+      "address": {
+        "@type": "PostalAddress",
+        "addressCountry": "IN"
+      }
+    }
+  </script>
+
   {{-- Tailwind CDN --}}
   <script src="https://cdn.tailwindcss.com"></script>
 

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'About Wwwebtech — Practical Technology Partner')
+@section('title', 'About Wwwebtech — Practical Technology Partner in India')
 @section('meta_description', 'Learn about Wwwebtech, our approach, and how we help Indian businesses build reliable digital systems.')
 
 @section('content')

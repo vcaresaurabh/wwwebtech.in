@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'wwwebtech — Build, Automate, Scale')
+@section('title', 'Wwwebtech — Web, CRM & Automation for Indian Businesses')
 
 @section('content')
 <section class="w-full bg-slate-50">
