@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Services — Web, CRM & Automation by Wwwebtech')
+@section('title', 'Our Services — Web, CRM & Automation | Wwwebtech')
 @section('meta_description', 'Explore Wwwebtech services including web development, CRM systems, automation, and ongoing technical support for Indian businesses.')
 
 @section('content')
@@ -30,6 +30,10 @@
                     We design and develop fast, secure, and maintainable websites and web platforms.
                     Our focus is on clarity, performance, and scalability — not templates or shortcuts.
                 </p>
+                <a href="{{ route('services.website') }}"
+                    class="text-accent font-medium hover:underline">
+                    Learn more →
+                </a>
             </div>
 
             <!-- Service 2 -->
@@ -41,6 +45,10 @@
                     We build custom CRM systems tailored to your sales, support, and internal workflows.
                     From lead tracking to reporting, our systems are designed to match how your team actually works.
                 </p>
+                <a href="{{ route('services.crm') }}"
+                    class="text-accent font-medium hover:underline">
+                    Learn more →
+                </a>
             </div>
 
             <!-- Service 3 -->
@@ -52,6 +60,10 @@
                     We automate repetitive tasks and manual processes to improve efficiency and reduce errors.
                     This includes integrations between tools, internal dashboards, and workflow optimization.
                 </p>
+                <a href="{{ route('services.automation') }}"
+                    class="text-accent font-medium hover:underline">
+                    Learn more →
+                </a>
             </div>
 
             <!-- Service 4 -->
@@ -63,6 +75,11 @@
                     We provide ongoing technical support, monitoring, and system improvements to ensure
                     your digital infrastructure remains reliable as your business grows.
                 </p>
+                <a href="{{ route('services.support') }}"
+                    class="text-accent font-medium hover:underline">
+                    Learn more →
+                </a>
+
             </div>
 
         </div>
@@ -75,7 +92,7 @@
             </p>
 
             <a href="{{ route('contact') }}"
-               class="inline-flex mt-6 items-center justify-center px-6 py-3 rounded-md
+                class="inline-flex mt-6 items-center justify-center px-6 py-3 rounded-md
                       bg-accent text-white text-sm font-medium
                       shadow-button hover:opacity-95 transition">
                 Request a consultation

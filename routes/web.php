@@ -21,3 +21,19 @@ Route::get('/services', function () {
 Route::get('/contact', function () {
     return view('pages.contact');
 })->name('contact');
+
+Route::get('/services/website-development', function () {
+    return view('pages.services.website-development');
+})->name('services.website');
+
+Route::get('/services/crm-systems', function () {
+    return view('pages.services.crm-systems');
+})->name('services.crm');
+
+Route::get('/services/business-automation', function () {
+    return view('pages.services.business-automation');
+})->name('services.automation');
+
+Route::get('/services/technical-support', function () {
+    return view('pages.services.technical-support');
+})->name('services.support');

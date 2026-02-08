@@ -22,10 +22,10 @@
 
                 <!-- Social icons (placeholders for now) -->
                 <div class="mt-4 flex gap-4 text-slate-500">
-                    <span>in</span>
-                    <span>𝕏</span>
-                    <span>f</span>
-                    <span>◎</span>
+                    <span><a href="https://www.linkedin.com/company/wwwebtech/">in</a></span>
+                    <!-- <span><a href="#">f</a></span> -->
+                    <span><a href="https://www.instagram.com/wwwebtech.in/">◎</a></span>
+                    <!-- <span>𝕏</span> -->
                 </div>
             </div>
 
@@ -35,10 +35,12 @@
                     Services
                 </h4>
                 <ul class="space-y-2 text-sm">
-                    <li class="hover:text-accent transition-colors">IT Support</li>
-                    <li class="hover:text-accent transition-colors">Ecommerce CRM</li>
-                    <li class="hover:text-accent transition-colors">Web Development</li>
-                    <li class="hover:text-accent transition-colors">App Development</li>
+                    <li class="hover:text-accent transition-colors"><a href="{{ route('services') }}">IT Support</a></li>
+                    <li class="hover:text-accent transition-colors"><a href="{{ route('services.crm') }}">Ecommerce CRM</a></li>
+                    <li class="hover:text-accent transition-colors"><a href="{{ route('services.website') }}">Web Development</a></li>
+                    <li class="hover:text-accent transition-colors"><a href="{{ route('services.automation') }}">Business Automation</a></li>
+                    <li class="hover:text-accent transition-colors"><a href="{{ route('services.support') }}">Ongoing Technical Support</a></li>
+                    <li class="hover:text-accent transition-colors"><a href="{{ route('services') }}">App Development</a></li>
                     <li class="hover:text-accent transition-colors">Cloud Security</li>
                 </ul>
             </div>
