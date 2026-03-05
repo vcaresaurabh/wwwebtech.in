@@ -37,7 +37,6 @@
                         <span class="font-medium text-slate-900">Location:</span><br>
                         India
                     </p>
-
                     <p>
                         <span class="font-medium text-slate-900">Email:</span><br>
                         <a href="mailto:contact@wwwebtech.in" class="hover:text-accent transition">
@@ -49,13 +48,32 @@
 
             <!-- Contact Form (UI only V1) -->
             <div class="bg-slate-50 border border-slate-200 rounded-lg p-8">
-                <form class="space-y-6">
+                @if(session('success'))
+                <div class="rounded-lg border border-green-200 bg-green-50 p-6 text-green-800">
+                    <h3 class="font-semibold text-base mb-2">
+                        Thank you for reaching out.
+                    </h3>
+                    <p class="text-sm leading-relaxed">
+                        Your message has been received. We typically respond within 1–2 business days.
+                    </p>
+                </div>
+                @endif
+
+                @if($errors->any())
+                <div class="rounded-md bg-red-50 p-4 text-sm text-red-700">
+                    Please fill all required fields correctly.
+                </div>
+                @endif
+
+                <form class="space-y-6" method="POST" action="{{ route('contact.submit') }}">
+                    @csrf
                     <div>
                         <label class="block text-sm font-medium text-slate-700">
                             Name
                         </label>
                         <input type="text"
-                               class="mt-2 w-full rounded-md border border-slate-300 px-4 py-2
+                            name="name"
+                            class="mt-2 w-full rounded-md border border-slate-300 px-4 py-2
                                       text-sm focus:outline-none focus:ring-2 focus:ring-accent">
                     </div>
 
@@ -64,7 +82,8 @@
                             Email
                         </label>
                         <input type="email"
-                               class="mt-2 w-full rounded-md border border-slate-300 px-4 py-2
+                            name="email"
+                            class="mt-2 w-full rounded-md border border-slate-300 px-4 py-2
                                       text-sm focus:outline-none focus:ring-2 focus:ring-accent">
                     </div>
 
@@ -73,20 +92,26 @@
                             Message
                         </label>
                         <textarea rows="4"
-                                  class="mt-2 w-full rounded-md border border-slate-300 px-4 py-2
-                                         text-sm focus:outline-none focus:ring-2 focus:ring-accent"></textarea>
+                            name="message"
+                            class="mt-2 w-full rounded-md border border-slate-300 px-4 py-2
+                                         text-sm focus:outline-none focus:ring-2 focus:ring-accent" required></textarea>
+                    </div>
+                    <div>
+                        <input type="text" name="company" class="hidden">
                     </div>
 
                     <button type="submit"
-                            class="inline-flex items-center justify-center px-6 py-3 rounded-md
+                        class="inline-flex items-center justify-center px-6 py-3 rounded-md
                                    bg-accent text-white text-sm font-medium
                                    shadow-button hover:opacity-95 transition">
                         Send message
                     </button>
 
-                    <p class="text-xs text-slate-500">
-                        We typically respond within 1–2 business days.
-                    </p>
+                    <div class="mt-8 text-sm text-slate-500 leading-relaxed">
+                        <p><strong>Response Time:</strong> 1–2 business days</p>
+                        <p><strong>Service Areas:</strong> Web, CRM, Automation, Technical Support</p>
+                    </div>
+
                 </form>
             </div>
 
