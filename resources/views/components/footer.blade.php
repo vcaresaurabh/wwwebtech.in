@@ -22,9 +22,9 @@
 
                 <!-- Social icons (placeholders for now) -->
                 <div class="mt-4 flex gap-4 text-slate-500">
-                    <span><a href="https://www.linkedin.com/company/wwwebtech/">in</a></span>
+                    <span><a href="https://www.linkedin.com/company/wwwebtech/" target="_blank" >in</a></span>
                     <!-- <span><a href="#">f</a></span> -->
-                    <span><a href="https://www.instagram.com/wwwebtech.in/">◎</a></span>
+                    <span><a href="https://www.instagram.com/wwwebtech.in/" target="_blank" >◎</a></span>
                     <!-- <span>𝕏</span> -->
                 </div>
             </div>
@@ -77,7 +77,7 @@
         <!-- Bottom bar -->
         <div class="mt-12 pt-6 border-t border-slate-200
                     flex flex-col md:flex-row justify-between gap-4 text-sm text-slate-500">
-            <p>© {{ date('Y') }} Wwwebtech Solutions Pvt Ltd. All rights reserved.</p>
+            <p>© {{ date('Y') }} Wwwebtech. All rights reserved.</p>
             <p>Made with <span class="text-red-500">❤</span> in India</p>
         </div>
 

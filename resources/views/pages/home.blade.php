@@ -18,6 +18,9 @@
                     Web platforms, CRM systems, and managed IT services —
                     designed to simplify operations and scale with your business.
                 </p>
+                <p class="text-sm text-slate-500 mt-3">
+                    Focused on long-term reliability, not short-term delivery.
+                </p>
 
                 <div class="mt-10 flex flex-col sm:flex-row gap-4">
                     <a href="#contact"
@@ -34,6 +37,10 @@
                         Explore Services
                     </a>
                 </div>
+                <p class="mt-6 text-xs text-slate-500">
+                    Based in India. Serving growing businesses nationwide.
+                </p>
+
             </div>
             <!-- Right Visual -->
             <div class="relative">
@@ -42,7 +49,7 @@
                         src="{{ asset('assets/images/hero-dashboard.png') }}"
                         alt="Business dashboard interface"
                         class="w-full h-auto object-cover shadow-[0_20px_40px_-20px_rgba(15,23,42,0.25)]"
-                         loading="lazy" />
+                        loading="lazy" />
                 </div>
             </div>
         </div>
@@ -109,7 +116,9 @@
             </div>
 
         </div>
+
     </div>
+
 </section>
 
 
@@ -155,8 +164,7 @@
                     src="{{ asset('assets/images/india-team.png') }}"
                     alt="Team collaborating on technology solutions"
                     class="w-full h-auto object-cover opacity-90"
-                     loading="lazy"
-                />
+                    loading="lazy" />
             </div>
 
         </div>
@@ -174,8 +182,7 @@
                     src="{{ asset('assets/images/crm-dashboard.png') }}"
                     alt="CRM system dashboard"
                     class="w-full h-auto object-cover
-                           shadow-[0_20px_40px_-20px_rgba(15,23,42,0.25)]"
-                />
+                           shadow-[0_20px_40px_-20px_rgba(15,23,42,0.25)]" />
             </div>
 
             <!-- Right Content -->
@@ -203,7 +210,7 @@
 
                 <div class="mt-10">
                     <a href="#contact"
-                       class="inline-flex items-center justify-center px-6 py-3 rounded-md
+                        class="inline-flex items-center justify-center px-6 py-3 rounded-md
                               bg-accent text-white text-sm font-medium
                               shadow-button hover:opacity-95 transition">
                         Discuss CRM requirements
@@ -222,7 +229,7 @@
         <!-- Section Header -->
         <div class="max-w-2xl mb-16">
             <span class="text-sm font-medium text-accent">
-                Why work with us
+                Why work with Wwwebtech
             </span>
             <h2 class="mt-3 text-3xl md:text-4xl font-semibold tracking-tight text-slate-900">
                 A practical technology partner, not just a vendor
@@ -280,7 +287,7 @@
 
             <!-- Left Content -->
             <div class="text-slate-200">
-                 <span class="text-sm font-medium text-accent">
+                <span class="text-sm font-medium text-accent">
                     Get in touch
                 </span>
                 <h2 class="text-3xl md:text-4xl font-semibold text-white">
@@ -295,59 +302,78 @@
                 <div class="mt-10 space-y-6 text-sm">
                     <div>
                         <p class="font-medium text-white">Headquarters</p>
-                        <p>Hosur Road, Bengaluru, Karnataka</p>
+                        <p>East Delhi, India</p>
                     </div>
 
                     <div>
                         <p class="font-medium text-white">Email</p>
-                        <p>hello@wwwebtech.in</p>
+                        <p>contact@wwwebtech.in</p>
                     </div>
 
                     <div>
                         <p class="font-medium text-white">Call</p>
-                        <p>+91 98765 43210</p>
+                        <p> <a href="tel:+918595250209" class="hover:text-accent transition">
+                            +91 85952 50209
+                        </a></p>
                     </div>
                 </div>
             </div>
 
             <!-- Form -->
             <div class="bg-white rounded-xl p-8 shadow-[0_20px_40px_-20px_rgba(0,0,0,0.4)]">
-                  <form class="space-y-6">
+                @if(session('success'))
+                <div class="rounded-lg border border-green-200 bg-green-50 p-6 text-green-800">
+                    <h3 class="font-semibold text-base mb-2">
+                        Thank you for reaching out.
+                    </h3>
+                    <p class="text-sm leading-relaxed">
+                        Your message has been received. We typically respond within 1–2 business days.
+                    </p>
+                </div>
+                @endif
 
+                @if($errors->any())
+                <div class="rounded-md bg-red-50 p-4 text-sm text-red-700">
+                    Please fill all required fields correctly.
+                </div>
+                @endif
+                <form class="space-y-6" method="POST" action="{{ route('contact.submit') }}">
+                    @csrf
                     <div>
                         <label class="block text-sm font-medium text-slate-700">
                             Name
                         </label>
                         <input
                             type="text"
+                            name="name"
                             class="mt-2 w-full rounded-md border border-slate-300 px-4 py-2
                                    text-sm focus:outline-none focus:ring-2 focus:ring-accent"
-                            placeholder="Your full name"
-                        />
+                            placeholder="Your full name" />
                     </div>
-
                     <div>
                         <label class="block text-sm font-medium text-slate-700">
                             Email
                         </label>
                         <input
                             type="email"
+                            name="email"
                             class="mt-2 w-full rounded-md border border-slate-300 px-4 py-2
                                    text-sm focus:outline-none focus:ring-2 focus:ring-accent"
-                            placeholder="you@company.com"
-                        />
+                            placeholder="you@company.com" />
                     </div>
-
                     <div>
                         <label class="block text-sm font-medium text-slate-700">
                             Message
                         </label>
                         <textarea
                             rows="4"
+                            name="message"
                             class="mt-2 w-full rounded-md border border-slate-300 px-4 py-2
                                    text-sm focus:outline-none focus:ring-2 focus:ring-accent"
-                            placeholder="Briefly describe what you’re looking for"
-                        ></textarea>
+                            placeholder="Briefly describe what you’re looking for" required></textarea>
+                    </div>
+                    <div>
+                        <input type="text" name="company" class="hidden">
                     </div>
 
                     <button
@@ -357,6 +383,10 @@
                                shadow-button hover:opacity-95 transition">
                         Send message
                     </button>
+                    <div class="mt-8 text-sm text-slate-500 leading-relaxed">
+                        <p><strong>Response Time:</strong> 1–2 business days</p>
+                        <p><strong>Service Areas:</strong> Web, CRM, Automation, Technical Support</p>
+                    </div>
 
                 </form>
             </div>

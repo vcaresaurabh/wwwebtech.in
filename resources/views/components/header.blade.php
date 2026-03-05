@@ -13,7 +13,7 @@
             {{-- Desktop Navigation --}}
             <nav class="hidden md:flex items-center gap-8 text-sm font-medium text-slate-700">
                 <a href="{{ route('services') }}" class="hover:text-brand transition">Services</a>
-                <a href="#crm" class="hover:text-brand transition">CRM</a>
+                <a href="/#crm" class="hover:text-brand transition">CRM</a>
                 <a href="{{ route('about') }}" class="hover:text-brand transition">About</a>
                 <a href="{{ route('contact') }}" class="hover:text-brand transition">Contact</a>
             </nav>
