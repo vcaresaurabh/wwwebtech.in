@@ -35,12 +35,18 @@
                 <div class="mt-8 space-y-4 text-slate-600">
                     <p>
                         <span class="font-medium text-slate-900">Location:</span><br>
-                        India
+                        East Delhi, India
                     </p>
                     <p>
                         <span class="font-medium text-slate-900">Email:</span><br>
                         <a href="mailto:contact@wwwebtech.in" class="hover:text-accent transition">
                             contact@wwwebtech.in
+                        </a>
+                    </p>
+                    <p>
+                        <span class="font-medium text-slate-900">Email:</span><br>
+                        <a href="tel:+918595250209" class="hover:text-accent transition">
+                            +91 85952 50209
                         </a>
                     </p>
                 </div>

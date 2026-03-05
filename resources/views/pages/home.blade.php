@@ -302,17 +302,19 @@
                 <div class="mt-10 space-y-6 text-sm">
                     <div>
                         <p class="font-medium text-white">Headquarters</p>
-                        <p>Hosur Road, Bengaluru, Karnataka</p>
+                        <p>East Delhi, India</p>
                     </div>
 
                     <div>
                         <p class="font-medium text-white">Email</p>
-                        <p>hello@wwwebtech.in</p>
+                        <p>contact@wwwebtech.in</p>
                     </div>
 
                     <div>
                         <p class="font-medium text-white">Call</p>
-                        <p>+91 98765 43210</p>
+                        <p> <a href="tel:+918595250209" class="hover:text-accent transition">
+                            +91 85952 50209
+                        </a></p>
                     </div>
                 </div>
             </div>
