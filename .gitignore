@@ -23,3 +23,26 @@ yarn-error.log
 /.zed
 /storage/logs
 /storage/framework
+
+# QA screenshots (regenerate with: node tools/shots.mjs)
+# Unanchored: a mistaken `cd` once created automation/automation/.shots,
+# which an anchored rule would have happily committed.
+.shots/
+/wwwebtech-site.zip
+
+# Brand export pack (regenerate: node tools/export-brand.mjs)
+/wwwebtech-brand-export.zip
+
+# ── Automation layer ────────────────────────────────────────
+# Live credentials. config.sample.php is the one that is committed.
+/automation/private/config.php
+# Written at runtime on the server.
+/automation/private/logs/
+/automation/private/posts/
+# Local development only: the combined web root, captured mail, sessions.
+/automation/.dev/
+# Build output (regenerate: bash automation/tools/package.sh)
+/automation/dist/
+
+# Deploy target (host, account, path). Copy tools/deploy.env.sample.
+/tools/deploy.env

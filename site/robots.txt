@@ -1,0 +1,6 @@
+# Everything is crawlable, including the AI crawlers - being cited by them
+# is the point of the GEO work we sell.
+User-agent: *
+Allow: /
+
+Sitemap: https://wwwebtech.in/sitemap.xml

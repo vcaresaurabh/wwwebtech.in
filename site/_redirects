@@ -1,0 +1,9 @@
+# Netlify / Cloudflare Pages. Same map as .htaccess.
+/services/website-development   /services/web-development/   301!
+/services/crm-systems   /services/crm-systems/   301!
+/services/business-automation   /services/business-automation/   301!
+/services/technical-support   /services/technical-support/   301!
+/about   /about/   301!
+/services   /services/   301!
+/contact   /contact/   301!
+/*   /404.html   404

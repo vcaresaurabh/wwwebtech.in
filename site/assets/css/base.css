@@ -1,0 +1,245 @@
+/* ============================================================
+   Base — reset, typography, layout primitives, motion policy.
+   ============================================================ */
+
+/* --- Reset ------------------------------------------------- */
+*, *::before, *::after { box-sizing: border-box; }
+* { margin: 0; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body {
+  background: var(--paper);
+  color: var(--ink-2);
+  font-family: var(--font-text);
+  font-size: var(--body);
+  line-height: 1.6;
+  font-synthesis-weight: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-optical-sizing: auto;
+  overflow-x: clip;
+}
+img, svg, video { display: block; max-width: 100%; height: auto; }
+input, button, textarea, select { font: inherit; color: inherit; }
+button { background: none; border: 0; cursor: pointer; }
+ul, ol { list-style: none; padding: 0; }
+:where(h1,h2,h3,h4,h5,h6) { font-weight: 500; }
+
+/* Numbers are ledger numbers, everywhere. */
+:where(h1,h2,h3,h4,.u-mono,.stat__num,time,td,th) { font-variant-numeric: tabular-nums; }
+
+/* --- Typography -------------------------------------------- */
+h1, .t-h1 {
+  font-family: var(--font-display);
+  font-size: var(--h1);
+  font-weight: 500;
+  line-height: 1.02;
+  letter-spacing: -0.021em;
+  color: var(--ink);
+  text-wrap: balance;
+}
+h2, .t-h2 {
+  font-family: var(--font-display);
+  font-size: var(--h2);
+  font-weight: 500;
+  line-height: 1.06;
+  letter-spacing: -0.017em;
+  color: var(--ink);
+  text-wrap: balance;
+}
+h3, .t-h3 {
+  font-family: var(--font-display);
+  font-size: var(--h3);
+  font-weight: 500;
+  line-height: 1.18;
+  letter-spacing: -0.012em;
+  color: var(--ink);
+  text-wrap: balance;
+}
+h4, .t-h4 {
+  font-family: var(--font-text);
+  font-size: var(--h4);
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.006em;
+  color: var(--ink);
+}
+p { text-wrap: pretty; }
+strong, b { font-weight: 600; color: var(--ink); }
+em, i { font-style: italic; }
+
+/* The mono label. The site's most repeated small gesture. */
+.u-mono {
+  font-family: var(--font-mono);
+  font-size: var(--label);
+  font-weight: 500;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  line-height: 1.4;
+}
+.u-lead    { font-size: clamp(1.0625rem, 1.5vw, 1.25rem); line-height: 1.55; color: var(--ink-2); }
+.u-measure { max-width: var(--measure); }
+.u-ink     { color: var(--ink); }
+.u-ink3    { color: var(--ink-3); }
+.u-accent  { color: var(--marigold-deep); }
+.u-small   { font-size: var(--small); }
+.u-italic  { font-family: var(--font-display); font-style: italic; font-weight: 400; }
+
+/* --- Links -------------------------------------------------- */
+a { color: inherit; text-decoration: none; }
+.prose a, a.u-link {
+  color: var(--marigold-deep);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: .18em;
+  text-decoration-color: color-mix(in srgb, var(--marigold) 45%, transparent);
+  transition: text-decoration-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+.prose a:hover, a.u-link:hover { text-decoration-color: var(--marigold); color: var(--marigold); }
+
+/* --- Focus. One ring, everywhere, always visible. ----------- */
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 1px;
+}
+.band :focus-visible, .footer :focus-visible { outline-color: var(--marigold-lift); }
+
+.skip-link {
+  position: absolute; left: var(--s4); top: var(--s4);
+  z-index: 200;
+  padding: .7rem 1.1rem;
+  background: var(--ink); color: var(--band-ink);
+  font-family: var(--font-mono); font-size: var(--label);
+  letter-spacing: .12em; text-transform: uppercase;
+  transform: translateY(-160%);
+  transition: transform var(--dur) var(--ease);
+}
+.skip-link:focus { transform: translateY(0); }
+
+/* --- Layout primitives -------------------------------------- */
+.shell {
+  width: 100%;
+  max-width: var(--maxw);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+.section { padding-block: var(--section); position: relative; }
+.section--tight { padding-block: clamp(3rem, 6vw, 5.5rem); }
+
+/* The ledger rule: a full-bleed hairline that opens a section. */
+.section--ruled { border-top: 1px solid var(--rule); }
+.band .section--ruled, .section--ruled.band { border-top-color: var(--band-rule); }
+
+/* The signature two-column editorial header: label rail + content. */
+.railed {
+  display: grid;
+  gap: var(--s5) var(--gutter);
+  grid-template-columns: 1fr;
+}
+@media (min-width: 62rem) {
+  .railed { grid-template-columns: minmax(9rem, 2fr) minmax(0, 7fr); gap: var(--gutter); }
+  .railed--wide { grid-template-columns: minmax(14rem, 4fr) minmax(0, 8fr); }
+}
+.rail { position: relative; }
+@media (min-width: 62rem) { .rail--sticky { position: sticky; top: 7rem; align-self: start; } }
+
+.stack   { display: flex; flex-direction: column; }
+.stack > * + * { margin-top: var(--flow, var(--s4)); }
+.cluster { display: flex; flex-wrap: wrap; gap: var(--s3); align-items: center; }
+
+.grid { display: grid; gap: var(--gutter); grid-template-columns: repeat(var(--cols, 1), minmax(0, 1fr)); }
+@media (min-width: 44rem)  { .grid { grid-template-columns: repeat(var(--cols-sm, var(--cols, 1)), minmax(0, 1fr)); } }
+@media (min-width: 62rem)  { .grid { grid-template-columns: repeat(var(--cols-md, var(--cols-sm, var(--cols, 1))), minmax(0, 1fr)); } }
+
+/* --- Dark bands --------------------------------------------- */
+.band {
+  background: var(--band);
+  color: var(--band-ink-2);
+  --rule: var(--band-rule);
+  --ink: var(--band-ink);
+  --ink-2: var(--band-ink-2);
+  --ink-3: #7C817B;
+  --card: #1B1F1C;
+  --marigold-deep: var(--marigold-lift);
+}
+.band h1, .band h2, .band h3, .band h4 { color: var(--band-ink); }
+
+/* --- Prose (blog, legal) ------------------------------------ */
+.prose { max-width: var(--measure); color: var(--ink-2); }
+.prose > * + *      { margin-top: var(--s5); }
+.prose h2           { margin-top: var(--s8); font-size: clamp(1.5rem, 3vw, 2rem); }
+.prose h3           { margin-top: var(--s7); font-size: clamp(1.25rem, 2vw, 1.5rem); }
+.prose h2 + *, .prose h3 + * { margin-top: var(--s4); }
+.prose ul, .prose ol { display: flex; flex-direction: column; gap: var(--s3); }
+.prose li           { position: relative; padding-left: 1.6em; }
+.prose ul > li::before {
+  content: ""; position: absolute; left: .25em; top: .68em;
+  width: .5em; height: 1px; background: var(--marigold);
+}
+.prose ol           { counter-reset: p; }
+.prose ol > li      { counter-increment: p; }
+.prose ol > li::before {
+  content: counter(p, decimal-leading-zero);
+  position: absolute; left: 0; top: .1em;
+  font-family: var(--font-mono); font-size: .75em; color: var(--marigold-deep);
+}
+.prose blockquote {
+  border-left: 2px solid var(--marigold);
+  padding-left: var(--s5);
+  font-family: var(--font-display); font-style: italic;
+  font-size: clamp(1.125rem, 2vw, 1.375rem); line-height: 1.4; color: var(--ink);
+}
+.prose figure     { margin-block: var(--s7); }
+.prose figcaption { margin-top: var(--s3); font-family: var(--font-mono); font-size: var(--label);
+                    letter-spacing: .06em; color: var(--ink-3); }
+.prose code {
+  font-family: var(--font-mono); font-size: .875em;
+  background: var(--wash); padding: .12em .38em; border-radius: var(--radius);
+  color: var(--ink);
+}
+.prose hr { border: 0; border-top: 1px solid var(--rule); margin-block: var(--s8); }
+
+/* --- Utilities ---------------------------------------------- */
+.u-hide     { display: none !important; }
+.visually-hidden {
+  position: absolute !important; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip-path: inset(50%); white-space: nowrap; border: 0;
+}
+@media (min-width: 62rem) { .u-md-only  { display: none !important; } }
+@media (max-width: 61.99rem) { .u-lg-only { display: none !important; } }
+
+/* Below-fold sections get skipped during layout until near-viewport. */
+.cv-auto { content-visibility: auto; contain-intrinsic-size: auto 600px; }
+
+/* ============================================================
+   T11 · Page transitions. The View Transitions API only — no router,
+   no JS. Browsers without it navigate normally and lose nothing.
+   ============================================================ */
+@view-transition { navigation: auto; }
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(root) { animation: vt-out .18s var(--ease-io) both; }
+  ::view-transition-new(root) { animation: vt-in  .25s var(--ease) both; }
+}
+@keyframes vt-out { to   { opacity: 0; transform: translateY(-6px); } }
+@keyframes vt-in  { from { opacity: 0; transform: translateY(10px); } }
+/* The nav and footer are the same on every page: hold them still
+   across the transition instead of cross-fading them with the body. */
+.nav    { view-transition-name: site-nav; }
+.footer { view-transition-name: site-footer; }
+
+/* ============================================================
+   MOTION POLICY (§8 T12)
+   Text is always in the DOM and always painted. Motion is added
+   by .js-on (set by main.js) — never removed by it. With JS off,
+   or reduced-motion on, everything below is simply never applied.
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

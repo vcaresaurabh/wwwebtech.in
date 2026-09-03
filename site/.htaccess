@@ -1,0 +1,76 @@
+# Apache / LiteSpeed (Hostinger, cPanel shared hosting).
+# Upload alongside index.html at the web root.
+Options -Indexes
+DirectoryIndex index.html
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Force https first, so redirected old URLs land on the secure host.
+  RewriteCond %{HTTPS} off
+  RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
+
+  # --- Old URLs from the previous site. 301, never 302. (brief section 3)
+  RewriteRule ^services/website-development/?$ /services/web-development/ [R=301,L]
+  RewriteRule ^services/crm-systems/?$ /services/crm-systems/ [R=301,L]
+  RewriteRule ^services/business-automation/?$ /services/business-automation/ [R=301,L]
+  RewriteRule ^services/technical-support/?$ /services/technical-support/ [R=301,L]
+  RewriteRule ^about/?$ /about/ [R=301,L]
+  RewriteRule ^services/?$ /services/ [R=301,L]
+  RewriteRule ^contact/?$ /contact/ [R=301,L]
+
+  # Trailing slash for real directories, so /about and /about/ never both rank.
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteCond %{REQUEST_URI} !/$
+  RewriteRule ^(.*)$ /$1/ [R=301,L]
+
+  # ---------------------------------------------------------------
+  # AI crawler logging.  DELETE THIS BLOCK TO SWITCH IT OFF.
+  #
+  # GPTBot, ClaudeBot, PerplexityBot and Google-Extended are how this
+  # site reaches AI answers, and none of them run JavaScript, so
+  # assets/js/wa.js never sees them. These rules route ONLY those
+  # crawlers through serve.php, which logs the visit and then serves
+  # the same file. Human traffic is untouched and never runs PHP.
+  #
+  # Needs the automation layer deployed (serve.php in the web root).
+  # Without it the rule simply never matches a file that exists, and
+  # the last condition below makes the whole block a no-op.
+  # ---------------------------------------------------------------
+  RewriteCond %{HTTP_USER_AGENT} (GPTBot|ChatGPT-User|OAI-SearchBot|ClaudeBot|Claude-Web|anthropic-ai|PerplexityBot|Perplexity-User|Google-Extended|Applebot-Extended|meta-externalagent|CCBot|Bytespider|Amazonbot) [NC]
+  RewriteCond %{DOCUMENT_ROOT}/serve.php -f
+  RewriteCond %{REQUEST_URI} !^/(api|admin)/
+  RewriteCond %{REQUEST_URI} \.(html?)$ [OR]
+  RewriteCond %{REQUEST_URI} /$
+  RewriteRule ^ /serve.php [L]
+</IfModule>
+
+ErrorDocument 404 /404.html
+
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css text/plain text/xml application/javascript application/json image/svg+xml
+</IfModule>
+
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/css               "access plus 1 year"
+  ExpiresByType application/javascript "access plus 1 year"
+  ExpiresByType font/woff2             "access plus 1 year"
+  ExpiresByType image/svg+xml          "access plus 1 month"
+  ExpiresByType image/png              "access plus 1 month"
+  ExpiresByType text/html              "access plus 0 seconds"
+</IfModule>
+
+<IfModule mod_headers.c>
+  Header set X-Content-Type-Options "nosniff"
+  Header set Referrer-Policy "strict-origin-when-cross-origin"
+  # Tell browsers to use https for a year without asking first. Deliberately
+  # WITHOUT includeSubDomains: flow.wwwebtech.in shares this domain and is not
+  # this repo's to vouch for. Add it once every subdomain is known-https.
+  Header always set Strict-Transport-Security "max-age=31536000"
+</IfModule>
+
+# The private folder and the path finder are code, never content.
+<FilesMatch "^(_wwt|config|bootstrap)\.php$">
+  Require all denied
+</FilesMatch>
