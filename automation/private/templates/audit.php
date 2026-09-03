@@ -41,14 +41,17 @@ $css     = $minify($readCss([$repo . '/webroot/lp/assets/lp.css',
                              $webroot . '/lp/assets/lp.css']));
 
 $titles = [
-    'form'    => 'Free website audit — see what is costing you enquiries | Wwwebtech',
+    'form'    => 'Free website audit — what it is costing you | Wwwebtech',
     'pending' => 'Checking your site… | Wwwebtech',
     'report'  => 'Your website audit | Wwwebtech',
     'failed'  => 'We could not reach that site | Wwwebtech',
 ];
 $title = $titles[$view] ?? $titles['form'];
-$desc  = 'A free, honest audit of your website: speed, mobile, search visibility and how easy '
-       . 'you are to contact. Seventeen checks run against your live page — no sales pitch, no invented scores.';
+/* Both of these are length-checked by the SEO job, which caught them at
+   66 and 185 characters on the first deploy. Titles truncate past 60,
+   descriptions past 160. */
+$desc  = 'Seventeen checks against your live page: speed, mobile, how Google reads you, and '
+       . 'how easy you are to contact. Honest findings, no sales pitch.';
 
 /* The score ring colour and the wording both come from one place, so the
    number and the sentence can never disagree. */

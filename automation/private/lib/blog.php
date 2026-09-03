@@ -20,6 +20,7 @@ final class Blog
 {
     public const MIN_WORDS   = 800;
     public const MAX_TITLE   = 60;
+    public const MAX_DEK     = 160;   // Google truncates a meta description past this
     public const MIN_H2      = 3;
     public const SIMILARITY  = 0.6;    // reject at or above this, against the last 60
     public const COMPARE_N   = 60;
@@ -80,7 +81,7 @@ final class Blog
 
         {
           "title": "under 60 characters, specific, no colon-subtitle padding",
-          "dek":   "one or two sentences, 120-200 characters, what the reader will get",
+          "dek":   "one or two sentences, 120-155 characters, what the reader will get",
           "read":  <integer minutes, honest for the length>,
           "body":  "<the article as HTML>",
           "faq":   [{"q": "...", "a": "..."}, ...]   // 3 to 5 real questions
@@ -259,8 +260,15 @@ final class Blog
         elseif (mb_strlen($title) > self::MAX_TITLE) {
             $fail[] = sprintf('title is %d characters, limit %d', mb_strlen($title), self::MAX_TITLE);
         }
+        /* The dek IS the meta description, and Google truncates one past
+           roughly 160 characters. The old limit was 400 while the failure
+           message already said "too long for a meta description" — so three
+           published posts went out with descriptions Google cuts short. */
         if ($dek === '') $fail[] = 'no description';
-        elseif (mb_strlen($dek) > 400) $fail[] = 'description is too long for a meta description';
+        elseif (mb_strlen($dek) > self::MAX_DEK) {
+            $fail[] = sprintf('description is %d characters, limit %d — Google truncates past that',
+                mb_strlen($dek), self::MAX_DEK);
+        }
 
         if ($body === '') { $fail[] = 'no body'; return $fail; }
 
