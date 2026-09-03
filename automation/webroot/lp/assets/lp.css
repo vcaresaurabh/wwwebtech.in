@@ -1,0 +1,298 @@
+/* ============================================================
+   Landing pages — a separate, small stylesheet.
+
+   Deliberately NOT the marketing site's CSS. That file carries the
+   navigation, the motion layer, the blog, the styleguide — none of which
+   exists here. A landing page's job is to load fast enough that the
+   visitor never considers leaving, and the fastest CSS is the CSS you
+   did not send.
+
+   The tokens are copied from site/assets/css/tokens.css rather than
+   imported, for the same reason. Same brand, different layout.
+   ============================================================ */
+
+:root{
+  --paper:#FAF8F4; --card:#FFFFFF; --ink:#131614; --ink-2:#4E5450; --ink-3:#686D69;
+  --rule:#E3E0D8; --marigold:#E07000; --marigold-deep:#B65600; --marigold-ink:#A34E00;
+  --marigold-wash:#FBF0E3; --band:#131614; --band-ink:#F3F1EA; --wash:#F2EEE6;
+  --ok:#1F7A4D; --ok-wash:#E6F4EC; --bad:#B3261E;
+  /* The 'X Fallback' families are the metric-matched faces declared in
+     fonts.css with size-adjust and ascent-override. They MUST be in the stack
+     — declared but unreferenced, the browser falls back to Georgia/Arial at
+     their own metrics and the page visibly reflows when the webfont swaps in.
+     Dropping them from these stacks measured CLS 0.139 against a 0.05 budget. */
+  --font:'Archivo','Archivo Fallback',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  --display:'Fraunces','Fraunces Fallback',Georgia,'Times New Roman',serif;
+  --mono:'IBM Plex Mono','IBM Plex Mono Fallback',ui-monospace,'Courier New',monospace;
+  --shell:min(1180px,100% - 2.5rem);
+  --radius:3px;
+  --s1:.25rem; --s2:.5rem; --s3:.75rem; --s4:1rem; --s5:1.5rem;
+  --s6:2rem; --s7:3rem; --s8:4rem; --s9:6rem;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+*{margin:0}
+/* The `hidden` attribute is only `display:none` from the UA stylesheet, so any
+   author display rule beats it — `.btn{display:inline-flex}` made every hidden
+   button visible, including in the no-JavaScript form. */
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--paper);color:var(--ink-2);font-family:var(--font);
+     font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased;
+     overflow-x:hidden}
+img{max-width:100%;height:auto;display:block}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--marigold-deep);outline-offset:2px;border-radius:2px}
+
+/* Screen-reader only, but focusable for the skip link. */
+.vh{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;
+    overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
+.skip{position:absolute;left:-9999px;top:0;background:var(--ink);color:var(--band-ink);
+      padding:.7rem 1rem;z-index:100}
+.skip:focus{left:0}
+
+.shell{width:var(--shell);margin-inline:auto}
+
+h1,h2,h3{color:var(--ink);font-family:var(--display);font-weight:500;
+         line-height:1.08;letter-spacing:-.02em;text-wrap:balance}
+h1{font-size:clamp(2.1rem,5.2vw,3.5rem)}
+h2{font-size:clamp(1.65rem,3.6vw,2.5rem)}
+h3{font-size:1.15rem;font-family:var(--font);font-weight:600;letter-spacing:0;line-height:1.3}
+p{text-wrap:pretty}
+.lead{font-size:clamp(1.05rem,2vw,1.25rem);color:var(--ink-2)}
+.mono{font-family:var(--mono);font-size:11px;letter-spacing:.12em;
+      text-transform:uppercase;color:var(--ink-3)}
+
+/* ── Header ─────────────────────────────────────────────────
+   Logo, phone, WhatsApp. No navigation: every removed exit is a
+   retained visitor, and that is the whole point of the page. */
+.lp-head{position:sticky;top:0;z-index:50;background:rgba(250,248,244,.94);
+         backdrop-filter:saturate(1.4) blur(8px);border-bottom:1px solid var(--rule)}
+.lp-head__in{display:flex;align-items:center;justify-content:space-between;
+             gap:var(--s4);padding:.7rem 0}
+.lp-head__logo{display:flex;align-items:center;gap:.5rem;text-decoration:none}
+.lp-head__logo svg{height:19px;width:auto}
+.lp-head__acts{display:flex;align-items:center;gap:.5rem}
+.lp-head__tel{font-weight:600;color:var(--ink);text-decoration:none;font-size:15px;
+              white-space:nowrap}
+.lp-head__logo svg{height:19px}
+/* At 390px the logo, the full phone number and a WhatsApp button do not fit
+   on one line — the button was being cut off the right edge. Below 34rem the
+   header keeps the phone (the highest-intent tap) and drops the WhatsApp
+   button, which the sticky bar at the bottom already provides. */
+@media (max-width:34rem){
+  .lp-head__tel span{display:none}
+  .lp-head__acts .btn{display:none}
+  .lp-head__logo svg{height:16px}
+  .lp-head__tel{font-size:14.5px}
+}
+
+/* ── Buttons ────────────────────────────────────────────── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.45rem;
+     padding:.85rem 1.4rem;border:1px solid var(--marigold);background:var(--marigold);
+     color:var(--ink);font:600 16px/1.2 var(--font);border-radius:var(--radius);
+     text-decoration:none;cursor:pointer;transition:background .12s,border-color .12s}
+.btn:hover{background:var(--marigold-deep);border-color:var(--marigold-deep);color:#fff}
+.btn--ghost{background:transparent;border-color:var(--rule);color:var(--ink)}
+.btn--ghost:hover{background:transparent;border-color:var(--ink);color:var(--ink)}
+.btn--sm{padding:.5rem .85rem;font-size:14px}
+.btn--wide{width:100%}
+.btn--lg{padding:1rem 1.6rem;font-size:17px}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+
+/* ── Hero ───────────────────────────────────────────────── */
+/* Tighter on mobile so the form is one thumb-scroll away, not two.
+   Every extra line of hero is a visitor who never reaches the form. */
+.hero{padding:var(--s6) 0 var(--s5)}
+.hero__grid{display:grid;gap:var(--s5);align-items:start}
+@media (max-width:34rem){
+  h1{font-size:clamp(1.85rem,7.4vw,2.4rem)}
+  .hero__sub{margin-top:var(--s3);font-size:1.02rem}
+  .hero__chips{margin-top:var(--s4);gap:.35rem}
+  .chip{font-size:12.5px;padding:.3rem .6rem}
+  .hero__cta{margin-top:var(--s5);gap:.5rem}
+  .hero__cta .btn{width:100%}
+}
+@media (min-width:60rem){
+  .hero{padding:var(--s8) 0 var(--s7)}
+  .hero__grid{grid-template-columns:minmax(0,1.05fr) minmax(380px,.95fr);gap:var(--s7)}
+}
+.hero__sub{margin-top:var(--s4);max-width:34ch}
+.hero__chips{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:var(--s5);padding:0;list-style:none}
+.chip{display:inline-flex;align-items:center;gap:.4rem;background:var(--card);
+      border:1px solid var(--rule);border-radius:2rem;padding:.35rem .75rem;
+      font-size:13.5px;color:var(--ink-2)}
+.chip svg{width:14px;height:14px;flex:none;color:var(--ok)}
+.hero__cta{display:flex;flex-wrap:wrap;gap:.6rem;margin-top:var(--s6)}
+
+/* ── Sections ───────────────────────────────────────────── */
+.sec{padding:var(--s7) 0}
+.sec--rule{border-top:1px solid var(--rule)}
+.sec--wash{background:var(--wash)}
+.sec--band{background:var(--band);color:#A9AEA8}
+.sec--band h2,.sec--band h3{color:var(--band-ink)}
+.sec__head{max-width:44ch;margin-bottom:var(--s6)}
+.sec__head p{margin-top:var(--s3)}
+
+.grid{display:grid;gap:var(--s4)}
+@media (min-width:40rem){.grid--2{grid-template-columns:repeat(2,1fr)}}
+@media (min-width:52rem){.grid--3{grid-template-columns:repeat(3,1fr)}}
+@media (min-width:52rem){.grid--4{grid-template-columns:repeat(4,1fr)}}
+
+.card{background:var(--card);border:1px solid var(--rule);border-radius:var(--radius);
+      padding:var(--s5)}
+.card h3{margin-bottom:var(--s2)}
+.card p{font-size:15.5px}
+.sec--band .card{background:#1B201D;border-color:#2C302D}
+
+/* Problem mirror: the buyer's words, then the consequence. */
+.pain{border-left:2px solid var(--marigold);padding-left:var(--s4)}
+.pain b{display:block;color:var(--ink);font-family:var(--display);font-weight:500;
+        font-size:1.2rem;line-height:1.25;margin-bottom:.35rem}
+.pain span{font-size:15px;color:var(--ink-3)}
+
+/* Deliverables: nouns, not adjectives. */
+.gets{list-style:none;padding:0;display:grid;gap:.85rem}
+@media (min-width:46rem){.gets{grid-template-columns:repeat(2,1fr);gap:.85rem var(--s5)}}
+.gets li{display:flex;gap:.6rem;align-items:flex-start;font-size:15.5px}
+.gets svg{width:17px;height:17px;flex:none;margin-top:.2rem;color:var(--marigold-deep)}
+
+/* Steps: the only numbered sequence on the page. */
+.steps{list-style:none;padding:0;counter-reset:s;display:grid;gap:var(--s5)}
+@media (min-width:52rem){.steps{grid-template-columns:repeat(4,1fr)}}
+.steps li{counter-increment:s;position:relative;padding-top:var(--s5)}
+.steps li::before{content:counter(s,decimal-leading-zero);position:absolute;top:0;left:0;
+                  font-family:var(--mono);font-size:11px;letter-spacing:.12em;
+                  color:var(--marigold-deep)}
+.steps h3{margin-bottom:.3rem}
+.steps p{font-size:15px}
+.steps .when{display:block;margin-top:.4rem;font-family:var(--mono);font-size:10.5px;
+             letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+
+/* Price anchor. */
+.price{display:grid;gap:var(--s5)}
+@media (min-width:46rem){.price{grid-template-columns:auto 1fr;align-items:start;gap:var(--s7)}}
+.price__fig{font-family:var(--display);font-size:clamp(2rem,5vw,2.9rem);color:var(--ink);
+            line-height:1;letter-spacing:-.02em;white-space:nowrap}
+.price__note{font-size:14px;color:var(--ink-3);margin-top:var(--s3)}
+.price__moves{list-style:none;padding:0;display:grid;gap:.5rem;margin-top:var(--s3)}
+.price__moves li{display:flex;gap:.55rem;font-size:15px}
+.price__moves b{color:var(--ink);font-weight:600}
+
+/* FAQ — <details> so it works with JavaScript off. */
+.faq{border-top:1px solid var(--rule)}
+.faq details{border-bottom:1px solid var(--rule)}
+.faq summary{cursor:pointer;padding:1.05rem 2.5rem 1.05rem 0;position:relative;
+             font-weight:600;color:var(--ink);font-size:16.5px;list-style:none}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"";position:absolute;right:.4rem;top:1.45rem;width:11px;height:11px;
+                    border-right:2px solid var(--ink-3);border-bottom:2px solid var(--ink-3);
+                    transform:rotate(45deg);transition:transform .15s}
+.faq details[open] summary::after{transform:rotate(-135deg);top:1.65rem}
+.faq__body{padding:0 0 1.15rem;font-size:15.5px;max-width:62ch}
+
+/* ── Footer ─────────────────────────────────────────────── */
+.lp-foot{border-top:1px solid var(--rule);padding:var(--s6) 0 calc(var(--s6) + 4.5rem);
+         font-size:14px;color:var(--ink-3)}
+@media (min-width:52rem){.lp-foot{padding-bottom:var(--s6)}}
+.lp-foot__in{display:flex;flex-wrap:wrap;gap:var(--s4) var(--s5);justify-content:space-between}
+.lp-foot a{color:var(--ink-2)}
+
+/* ── Sticky mobile action bar ───────────────────────────── */
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:60;display:grid;
+     grid-template-columns:repeat(3,1fr);gap:1px;background:var(--rule);
+     border-top:1px solid var(--rule)}
+.bar a{display:flex;align-items:center;justify-content:center;gap:.4rem;
+       background:var(--card);color:var(--ink);text-decoration:none;
+       padding:.85rem .4rem;font-size:13.5px;font-weight:600}
+.bar a.is-primary{background:var(--marigold)}
+.bar svg{width:16px;height:16px}
+@media (min-width:52rem){.bar{display:none}}
+
+.pill{display:inline-flex;align-items:center;gap:.3rem;padding:.15rem .5rem;border-radius:2px;
+      font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;
+      background:var(--marigold-wash);color:var(--marigold-ink);border:1px solid #F0D9BC}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
+
+/* ============================================================
+   The form (§3)
+
+   Multi-step with JavaScript, one long form without it. The
+   no-JS version is not a degraded fallback bolted on afterwards —
+   it is what the markup actually is, and the script hides steps
+   on top of it.
+   ============================================================ */
+.formwrap{background:var(--card);border:1px solid var(--rule);border-radius:var(--radius);
+          padding:var(--s5);box-shadow:0 1px 2px rgba(19,22,20,.04)}
+@media (min-width:60rem){.formwrap{position:sticky;top:5rem}}
+.formwrap__head{margin-bottom:var(--s4)}
+.formwrap__head h2{font-size:1.35rem;line-height:1.2}
+.formwrap__head p{font-size:14px;color:var(--ink-3);margin-top:.3rem}
+
+/* Progress. Hidden when JavaScript is off — there are no steps then. */
+.steps-bar{display:none;gap:.3rem;margin-bottom:var(--s4)}
+.js-on .steps-bar{display:flex}
+.steps-bar span{flex:1;height:3px;background:var(--rule);border-radius:2px}
+.steps-bar span.is-done{background:var(--marigold)}
+
+.step{display:block}
+.js-on .step{display:none}
+.js-on .step.is-active{display:block}
+.step__legend{font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;
+              text-transform:uppercase;color:var(--ink-3);margin-bottom:.6rem;
+              padding:0;border:0}
+
+.field{margin-bottom:var(--s4)}
+.field:last-of-type{margin-bottom:0}
+.field label{display:block;font-size:14px;font-weight:600;color:var(--ink);margin-bottom:.35rem}
+.field .req{color:var(--marigold-deep)}
+.input,.select,.textarea{width:100%;padding:.7rem .8rem;background:var(--paper);
+  color:var(--ink);border:1px solid var(--rule);border-radius:var(--radius);
+  font:16px/1.4 var(--font)}
+.textarea{min-height:5rem;resize:vertical}
+.input:focus,.select:focus,.textarea:focus{outline:2px solid var(--marigold-deep);
+  outline-offset:1px;border-color:transparent}
+.hint{font-size:13px;color:var(--ink-3);margin-top:.3rem}
+.err{font-size:13px;color:var(--bad);margin-top:.3rem;font-weight:600}
+
+/* Big tappable chips for step one — the easiest question first. */
+.chips{display:flex;flex-wrap:wrap;gap:.5rem}
+.chips input{position:absolute;opacity:0;width:0;height:0}
+.chips label{display:inline-flex;align-items:center;gap:.4rem;padding:.6rem .9rem;
+  border:1px solid var(--rule);border-radius:2rem;background:var(--paper);
+  font-size:15px;font-weight:500;color:var(--ink-2);cursor:pointer;
+  transition:border-color .12s,background .12s;margin:0}
+.chips label:hover{border-color:var(--ink-3)}
+.chips input:checked + label{background:var(--marigold-wash);border-color:var(--marigold);
+  color:var(--marigold-ink);font-weight:600}
+.chips input:focus-visible + label{outline:2px solid var(--marigold-deep);outline-offset:2px}
+
+.radios{display:grid;gap:.4rem}
+.radios label{display:flex;align-items:center;gap:.55rem;padding:.55rem .7rem;
+  border:1px solid var(--rule);border-radius:var(--radius);background:var(--paper);
+  font-size:15px;cursor:pointer;margin:0}
+.radios input{accent-color:var(--marigold-deep);width:auto;margin:0}
+.radios label:has(input:checked){background:var(--marigold-wash);border-color:var(--marigold)}
+
+.consent{display:flex;gap:.6rem;align-items:flex-start;font-size:13.5px;
+         color:var(--ink-3);line-height:1.5}
+.consent input{accent-color:var(--marigold-deep);margin-top:.2rem;flex:none;width:auto}
+.consent a{color:var(--marigold-ink)}
+
+.form__nav{display:flex;gap:.5rem;margin-top:var(--s5)}
+.form__nav .btn{flex:1}
+.form__back{flex:0 0 auto!important}
+.form__status{margin-top:var(--s3);font-size:14px;min-height:1.2em}
+.form__status.is-err{color:var(--bad);font-weight:600}
+.form__status.is-ok{color:var(--ok);font-weight:600}
+
+/* The honeypot. Never seen, never focusable, never announced. */
+.hp{position:absolute!important;left:-9999px!important;width:1px;height:1px;
+    overflow:hidden}
+
+.done{text-align:center;padding:var(--s5) 0}
+.done svg{width:44px;height:44px;color:var(--ok);margin:0 auto var(--s4)}
+.done h2{font-size:1.5rem;margin-bottom:.5rem}

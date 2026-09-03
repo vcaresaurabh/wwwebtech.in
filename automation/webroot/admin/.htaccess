@@ -1,0 +1,37 @@
+# The panel is one entry point: index.php. Everything else in here is either
+# an include or a stylesheet, and neither should ever be fetched directly.
+#
+# The PHP files also guard themselves (they 404 when requested directly), so
+# this is the second lock, not the only one.
+Options -Indexes
+
+# The site's root .htaccess sets "DirectoryIndex index.html", which this folder
+# inherits — so without this line a request for /admin/ looks for an index.html
+# that does not exist and returns 403 instead of the panel.
+DirectoryIndex index.php
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule ^pages/ - [R=404,L]
+  RewriteRule ^_      - [R=404,L]
+</IfModule>
+
+<FilesMatch "^_">
+  Require all denied
+</FilesMatch>
+
+<IfModule mod_headers.c>
+  # These are also sent by PHP, and that is not enough on its own: mod_headers
+  # runs after the script, so the site's root .htaccess (and the host's own
+  # config) was overwriting the panel's Referrer-Policy and stripping its CSP
+  # entirely. Setting them here, in the panel's own directory, is what actually
+  # reaches the browser.
+  Header always unset Content-Security-Policy
+  Header always unset Referrer-Policy
+  Header always set Content-Security-Policy "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'; object-src 'none'"
+  Header always set Referrer-Policy "same-origin"
+  Header always set X-Frame-Options "DENY"
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Robots-Tag "noindex, nofollow, noarchive"
+  Header always set Cache-Control "no-store, max-age=0"
+</IfModule>

@@ -1,0 +1,24 @@
+# Landing pages are PHP, one controller, routed by path.
+#   /lp/custom-crm/  ->  /lp/index.php
+DirectoryIndex index.php
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /lp/
+  # Real files (the stylesheet, the script) are served directly.
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+  # Everything else is a landing page slug.
+  RewriteRule ^([a-z0-9][a-z0-9-]*)/?$ index.php [L,QSA]
+</IfModule>
+
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+</IfModule>
+
+# The data files live outside the web root; nothing here but PHP and assets.
+<FilesMatch "^(?!index\.php$).*\.php$">
+  Require all denied
+</FilesMatch>

@@ -1,0 +1,233 @@
+/* ============================================================
+   Admin panel — same brand tokens as the public site, tuned for
+   density: smaller type, tighter rows, tabular numerals.
+   ============================================================ */
+:root{
+  --paper:#FAF8F4; --card:#FFFFFF; --ink:#131614; --ink-2:#4E5450; --ink-3:#686D69;
+  --rule:#E3E0D8; --marigold:#E07000; --marigold-deep:#B65600; --marigold-ink:#A34E00;
+  --marigold-wash:#FBF0E3; --band:#131614; --band-ink:#F3F1EA; --band-rule:#2C302D;
+  --wash:#F2EEE6; --ok:#1F7A4D; --ok-wash:#E6F4EC; --warn:#B65600; --warn-wash:#FBF0E3;
+  --bad:#B3261E; --bad-wash:#FBEAE9; --info-wash:#EAF0F6; --info:#2A5A8C;
+  --font:Archivo,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,'Courier New',monospace;
+  --display:Fraunces,Georgia,serif;
+  --radius:3px; --sidebar:232px;
+}
+*,*::before,*::after{box-sizing:border-box}
+*{margin:0}
+body{background:var(--paper);color:var(--ink-2);font-family:var(--font);font-size:14px;
+     line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+h1,h2,h3{color:var(--ink);font-weight:600;line-height:1.2}
+h1{font-size:1.5rem;letter-spacing:-.02em}
+h2{font-size:1.075rem}
+h3{font-size:.9375rem}
+table,td,th,.num,time,.kpi__v{font-variant-numeric:tabular-nums}
+:focus-visible{outline:2px solid var(--marigold-deep);outline-offset:2px;border-radius:2px}
+.vh{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+    clip-path:inset(50%);white-space:nowrap;border:0}
+
+/* ── Shell ─────────────────────────────────────────────── */
+.shell{display:grid;grid-template-columns:var(--sidebar) 1fr;min-height:100vh}
+.side{background:var(--band);color:#A9AEA8;padding:1.25rem 0;position:sticky;top:0;height:100vh;
+      overflow-y:auto;display:flex;flex-direction:column}
+.side__brand{display:flex;align-items:center;gap:.5rem;padding:0 1.25rem 1.25rem;
+             border-bottom:1px solid var(--band-rule);margin-bottom:.75rem}
+.side__brand svg{height:19px;width:auto}
+.side__tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+           color:#7C817B;padding:0 1.25rem;margin-bottom:.5rem}
+.side nav{display:flex;flex-direction:column;gap:1px;padding:0 .6rem}
+.side nav a{display:flex;align-items:center;gap:.6rem;padding:.5rem .65rem;border-radius:var(--radius);
+            font-size:13.5px;color:#A9AEA8;transition:background .12s,color .12s}
+.side nav a:hover{background:#1E2320;color:var(--band-ink)}
+.side nav a[aria-current]{background:var(--marigold);color:var(--ink);font-weight:600}
+.side nav a[aria-current] .ic{opacity:1}
+.ic{width:15px;height:15px;flex:none;stroke:currentColor;fill:none;stroke-width:1.6;opacity:.75}
+.side__foot{margin-top:auto;padding:1rem 1.25rem 0;border-top:1px solid var(--band-rule);
+            font-size:12px;color:#7C817B}
+.side__foot a{color:#A9AEA8;text-decoration:underline;text-underline-offset:.15em}
+
+.main{min-width:0;display:flex;flex-direction:column}
+.top{display:flex;align-items:center;justify-content:space-between;gap:1rem;
+     padding:.85rem 1.5rem;border-bottom:1px solid var(--rule);background:var(--paper);
+     position:sticky;top:0;z-index:20}
+.top__who{font-size:12.5px;color:var(--ink-3)}
+.top__who b{color:var(--ink);font-weight:600}
+.content{padding:1.5rem;flex:1;max-width:1500px;width:100%}
+.page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;
+           flex-wrap:wrap;margin-bottom:1.25rem}
+.page-head p{color:var(--ink-3);font-size:13px;margin-top:.25rem;max-width:64ch}
+
+/* ── Bits ──────────────────────────────────────────────── */
+.card{background:var(--card);border:1px solid var(--rule);border-radius:var(--radius);padding:1.1rem}
+.card--pad0{padding:0}
+.grid{display:grid;gap:1rem}
+.mono{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.muted{color:var(--ink-3)}
+.small{font-size:12.5px}
+.stack{display:flex;flex-direction:column;gap:.75rem}
+.row{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}
+.spacer{flex:1}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.4rem;
+     padding:.5rem .9rem;border:1px solid var(--marigold);background:var(--marigold);
+     color:var(--ink);font:600 13px/1.2 var(--font);border-radius:var(--radius);cursor:pointer;
+     transition:background .12s,border-color .12s}
+.btn:hover{background:var(--marigold-deep);border-color:var(--marigold-deep);color:#fff}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn--ghost{background:transparent;border-color:var(--rule);color:var(--ink)}
+.btn--ghost:hover{background:transparent;border-color:var(--ink);color:var(--ink)}
+.btn--danger{background:transparent;border-color:var(--bad);color:var(--bad)}
+.btn--danger:hover{background:var(--bad);border-color:var(--bad);color:#fff}
+.btn--sm{padding:.3rem .6rem;font-size:12px}
+
+label{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;
+      text-transform:uppercase;color:var(--ink-3);margin-bottom:.3rem}
+input[type=text],input[type=email],input[type=password],input[type=search],input[type=date],
+input[type=number],input[type=tel],input[type=url],select,textarea{
+  width:100%;padding:.5rem .6rem;background:var(--card);color:var(--ink);
+  border:1px solid var(--rule);border-radius:var(--radius);font:14px/1.4 var(--font)}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--marigold-deep);outline-offset:1px;
+  border-color:transparent}
+textarea{min-height:5rem;resize:vertical}
+.field{margin-bottom:.85rem}
+.field .hint{font-size:12px;color:var(--ink-3);margin-top:.25rem}
+.field--inline{display:flex;align-items:center;gap:.5rem}
+.field--inline label{margin:0}
+
+/* ── Alerts ────────────────────────────────────────────── */
+.alert{padding:.65rem .85rem;border-radius:var(--radius);font-size:13px;
+       border:1px solid transparent;margin-bottom:1rem}
+.alert--ok{background:var(--ok-wash);border-color:#BFE0CD;color:var(--ok)}
+.alert--bad{background:var(--bad-wash);border-color:#F0C8C5;color:var(--bad)}
+.alert--warn{background:var(--warn-wash);border-color:#F0D9BC;color:var(--warn)}
+.alert--info{background:var(--info-wash);border-color:#C9D8E6;color:var(--info)}
+
+/* ── Pills ─────────────────────────────────────────────── */
+.pill{display:inline-flex;align-items:center;gap:.3rem;padding:.15rem .45rem;border-radius:2px;
+      font-family:var(--mono);font-size:10px;letter-spacing:.07em;text-transform:uppercase;
+      border:1px solid transparent;white-space:nowrap}
+.pill--new{background:var(--info-wash);color:var(--info);border-color:#C9D8E6}
+.pill--contacted{background:var(--warn-wash);color:var(--warn);border-color:#F0D9BC}
+.pill--qualified{background:var(--marigold-wash);color:var(--marigold-ink);border-color:#F0D9BC}
+.pill--won{background:var(--ok-wash);color:var(--ok);border-color:#BFE0CD}
+.pill--lost{background:var(--wash);color:var(--ink-3);border-color:var(--rule)}
+.pill--ok{background:var(--ok-wash);color:var(--ok);border-color:#BFE0CD}
+.pill--warn{background:var(--warn-wash);color:var(--warn);border-color:#F0D9BC}
+.pill--fail{background:var(--bad-wash);color:var(--bad);border-color:#F0C8C5}
+.pill--info{background:var(--info-wash);color:var(--info);border-color:#C9D8E6}
+.pill--bot{background:var(--wash);color:var(--ink-2);border-color:var(--rule)}
+/* Lead bands. Hot is the only one that gets the loud colour — if three
+   bands all shout, none of them mean anything at a glance. */
+.pill--hot{background:var(--bad-wash);color:var(--bad);border-color:#F0C8C5}
+.pill--warm{background:var(--warn-wash);color:var(--warn);border-color:#F0D9BC}
+.pill--cold{background:var(--wash);color:var(--ink-3);border-color:var(--rule)}
+.pill--meeting{background:var(--marigold-wash);color:var(--marigold-ink);border-color:#F0D9BC}
+
+/* ── Tables ────────────────────────────────────────────── */
+.tablewrap{overflow-x:auto;border:1px solid var(--rule);border-radius:var(--radius);background:var(--card)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{text-align:left;padding:.55rem .7rem;background:var(--wash);border-bottom:1px solid var(--rule);
+         font-family:var(--mono);font-size:10px;letter-spacing:.09em;text-transform:uppercase;
+         color:var(--ink-3);font-weight:500;white-space:nowrap;position:sticky;top:0;z-index:1}
+thead th a{display:inline-flex;align-items:center;gap:.25rem;color:inherit}
+thead th a:hover{color:var(--ink)}
+tbody td{padding:.55rem .7rem;border-bottom:1px solid var(--rule);vertical-align:top}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover{background:var(--wash)}
+td.r,th.r{text-align:right}
+td.n{white-space:nowrap}
+.t-empty{padding:2.5rem 1.25rem;text-align:center;color:var(--ink-3);font-size:13px}
+.t-empty b{display:block;color:var(--ink);font-size:14.5px;margin-bottom:.3rem}
+
+/* ── KPI row ───────────────────────────────────────────── */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.75rem;margin-bottom:1.25rem}
+.kpi{background:var(--card);border:1px solid var(--rule);border-radius:var(--radius);padding:.8rem .9rem}
+.kpi__k{font-family:var(--mono);font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3)}
+.kpi__v{font-family:var(--display);font-size:1.85rem;line-height:1.05;color:var(--ink);margin-top:.3rem;
+        font-weight:500;letter-spacing:-.02em}
+.kpi__d{font-size:11.5px;margin-top:.2rem}
+.kpi__d.up{color:var(--ok)} .kpi__d.down{color:var(--bad)} .kpi__d.flat{color:var(--ink-3)}
+.spark{display:block;margin-top:.35rem;width:100%;height:26px;overflow:visible}
+
+/* ── Filter bar ────────────────────────────────────────── */
+.filters{display:flex;gap:.5rem;flex-wrap:wrap;align-items:flex-end;margin-bottom:1rem;
+         background:var(--card);border:1px solid var(--rule);border-radius:var(--radius);padding:.75rem}
+.filters .field{margin:0;min-width:130px}
+.chipbar{display:flex;gap:.3rem;flex-wrap:wrap}
+.chipbar a{padding:.3rem .6rem;border:1px solid var(--rule);border-radius:var(--radius);
+           font-size:12px;background:var(--card);color:var(--ink-2)}
+.chipbar a[aria-current]{background:var(--ink);border-color:var(--ink);color:var(--band-ink);font-weight:600}
+
+.pager{display:flex;gap:.4rem;align-items:center;justify-content:space-between;margin-top:.85rem;
+       font-size:12.5px;color:var(--ink-3);flex-wrap:wrap}
+.pager a,.pager span.cur{padding:.25rem .55rem;border:1px solid var(--rule);border-radius:var(--radius)}
+.pager span.cur{background:var(--ink);color:var(--band-ink);border-color:var(--ink)}
+
+/* ── Login ─────────────────────────────────────────────── */
+.login{min-height:100vh;display:grid;place-items:center;padding:1.5rem}
+.login__box{width:100%;max-width:360px}
+.login__box .card{padding:1.4rem}
+.login__brand{display:flex;justify-content:center;margin-bottom:1.1rem}
+.login__brand svg{height:26px;width:auto}
+.login h1{font-family:var(--display);font-weight:500;font-size:1.45rem;text-align:center;margin-bottom:.25rem}
+.login p.sub{text-align:center;font-size:12.5px;color:var(--ink-3);margin-bottom:1.1rem}
+.login .btn{width:100%;padding:.6rem}
+
+/* ── Detail drawer ─────────────────────────────────────── */
+.drawer{position:fixed;inset:0;background:rgba(19,22,20,.4);display:grid;place-items:end center;z-index:50}
+.drawer__panel{background:var(--card);width:min(560px,100%);max-height:100vh;overflow-y:auto;
+               border-left:1px solid var(--rule);padding:1.25rem;margin-left:auto;height:100vh}
+.dl{display:grid;grid-template-columns:auto 1fr;gap:.4rem .9rem;font-size:13px}
+.dl dt{font-family:var(--mono);font-size:10px;letter-spacing:.09em;text-transform:uppercase;
+       color:var(--ink-3);padding-top:.15rem}
+.dl dd{margin:0;color:var(--ink)}
+
+.linkbtn{background:none;border:0;padding:0;font:inherit;color:inherit;
+        text-decoration:underline;cursor:pointer}
+.linkbtn:hover{color:var(--marigold-deep)}
+
+/* ── Charts ────────────────────────────────────────────── */
+/* preserveAspectRatio="none" means the viewBox stretches to the box, so the
+   height here is the real height and the width is whatever it is given. */
+.chart{display:block;width:100%;height:170px;overflow:visible}
+.chart-key{display:flex;gap:1rem;font-size:11.5px;color:var(--ink-3);margin-top:.4rem}
+.chart-key i{display:inline-block;width:14px;height:0;border-top:2px solid var(--marigold);
+             margin-right:.35rem;vertical-align:middle;font-style:normal}
+.chart-key .k2 i{border-top:1.5px dashed var(--ink)}
+
+/* Proportion bar in the "top pages"/"sources" tables. */
+.bar{display:block;height:4px;background:var(--wash);border-radius:2px;margin-top:.3rem;overflow:hidden}
+.bar>span{display:block;height:100%;background:var(--marigold);border-radius:2px}
+
+/* ── Leads ─────────────────────────────────────────────── */
+/* Two columns that actually collapse. An inline grid-template on the
+   element would survive the mobile breakpoint below and overflow at 390px. */
+.grid--split{grid-template-columns:minmax(0,2fr) minmax(260px,1fr)}
+@media (max-width:820px){.grid--split{grid-template-columns:1fr}}
+
+/* Selects inside a table are controls, not fields: full width breaks the row. */
+table select{width:auto;min-width:7.5rem;padding:.25rem .4rem;font-size:12px}
+table input[type=checkbox]{width:auto;margin:0}
+.lead-msg{white-space:pre-wrap;font-size:15px;line-height:1.65;color:var(--ink)}
+
+/* Body cells wrap; only headers stay on one line. Otherwise one long cell
+   decides the whole table's width and pushes later columns out of view. */
+tbody td{white-space:normal}
+
+/* ── Mobile ────────────────────────────────────────────── */
+@media (max-width:900px){
+  .shell{grid-template-columns:1fr}
+  .side{position:static;height:auto;flex-direction:column}
+  .side nav{flex-direction:row;flex-wrap:wrap;padding:0 .75rem}
+  .side nav a{font-size:12.5px;padding:.4rem .55rem}
+  .side__foot{display:none}
+  .content{padding:1rem}
+  .top{padding:.7rem 1rem}
+  .kpis{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
+  /* .tablewrap already scrolls. Without a min-width the table squeezes
+     itself into the viewport instead, and every cell wraps to one word
+     per line — unreadable, and the scroll never engages. */
+  .tablewrap table{min-width:46rem}
+}
+@media print{.side,.top,.filters,.pager{display:none}.shell{grid-template-columns:1fr}}
