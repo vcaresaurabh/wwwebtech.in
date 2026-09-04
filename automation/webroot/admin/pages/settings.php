@@ -402,13 +402,20 @@ layout_top('Settings', 'settings');
             Telegram me when a message needs approval</label>
         </div>
       </div>
-      <?php $dist = Score::distribution(); if ((int)$dist['total'] > 0): ?>
+      <?php $dist = Score::distribution();
+            /* Below a handful of leads the split says nothing about the
+               thresholds, and printing it invites a change based on noise. */
+            if ((int)$dist['total'] >= 5): ?>
         <p class="small muted" style="margin:0">With these thresholds, the last
           <?= (int)$dist['total'] ?> leads split
           <b><?= (int)($dist['hot'] ?? 0) ?></b> hot ·
           <b><?= (int)($dist['warm'] ?? 0) ?></b> warm ·
           <b><?= (int)($dist['cold'] ?? 0) ?></b> cold.
           If nearly everything is hot, the threshold is too low to be useful for deciding what to do first.</p>
+      <?php elseif ((int)$dist['total'] > 0): ?>
+        <p class="small muted" style="margin:0">Only <?= (int)$dist['total'] ?>
+          <?= (int)$dist['total'] === 1 ? 'lead' : 'leads' ?> in the last 90 days — too few to tell you
+          anything useful about where these thresholds should sit. Leave them until there are a few more.</p>
       <?php endif; ?>
       <div class="field"><label for="cw">Consent wording on the forms</label>
         <textarea id="cw" name="consent_wording" rows="2"><?= e(Leads::consentWording()) ?></textarea>
