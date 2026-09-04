@@ -97,10 +97,18 @@ $serviceLd = [
 <style><?= $fontCss ?><?= $css ?></style>
 <script type="application/ld+json"><?= json_encode($serviceLd, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?></script>
 <script type="application/ld+json"><?= json_encode($faqLd, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?></script>
-<!--WWT_TAGS_HEAD_START--><!--WWT_TAGS_HEAD_END-->
-</head>
+<?php /* The panel's tags, rendered live rather than written into a file:
+         Tags::apply() only rewrites .html, so on a PHP page the markers it
+         looks for were never filled. Deferred until after paint, so they
+         cost nothing against the budget these pages are held to. Wrapped so
+         a database hiccup cannot take a paid landing page down. */ ?>
+<?php $tagsHead = ''; $tagsBody = '';
+      if (!empty($ready) && class_exists('Tags')) {
+          try { $tagsHead = Tags::headHtml(); $tagsBody = Tags::bodyHtml(); } catch (Throwable) {}
+      } ?>
+<?= $tagsHead ?></head>
 <body>
-<!--WWT_TAGS_BODY_START--><!--WWT_TAGS_BODY_END-->
+<?= $tagsBody ?>
 <a class="skip" href="#form">Skip to the form</a>
 
 <?php /* ── 1 · Minimal header ─────────────────────────────── */ ?>

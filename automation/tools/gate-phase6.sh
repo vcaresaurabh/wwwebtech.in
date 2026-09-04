@@ -52,6 +52,19 @@ has "$snip" "gtag('config','G-TESTGATE1')"                && ok "GA4 is configur
 has "$snip" "googletagmanager.com/gtm.js"                 && ok "GTM uses the official snippet" || no "GTM snippet" "wrong"
 has "$snip" 'name="google-site-verification"'             && ok "Search Console is a meta tag only" || no "GSC" "wrong"
 has "$snip" "ns.html?id=GTM-TESTG1"                       && ok "GTM's noscript iframe goes in the body" || no "GTM noscript" "missing"
+# Every script tag waits for the page to draw. Measured on the live site,
+# tags in <head> were the whole difference between LCP 3.6s and 1.4s.
+has "$snip" "wwtDefer(function()"                         && ok "script tags are deferred until after paint" || no "deferred" "a tag loads before paint"
+has "$snip" "addEventListener('load'"                     && ok "the loader waits for the load event" || no "loader" "missing"
+[ "$(printf '%s' "$snip" | grep -c 'wwtDefer=function')" = "1" ] && ok "the loader is emitted exactly once" || no "loader count" "not exactly once"
+# GA4 and Ads on the same page share one gtag.js download.
+$PHP -r '
+require "private/bootstrap.php";
+Tags::set("ads","AW-123456789"); Settings::set("tag_ads_on","1");
+echo Tags::headHtml();
+Settings::set("tag_ads_on","0");' > /tmp/snip2.txt
+[ "$(grep -c 'gtag/js?id=' /tmp/snip2.txt)" = "1" ] && ok "GA4 + Ads fetch gtag.js once, not twice" || no "gtag dedupe" "$(grep -c 'gtag/js?id=' /tmp/snip2.txt) downloads"
+has "$(cat /tmp/snip2.txt)" "gtag('config','AW-123456789')" && ok "and Ads is still configured" || no "ads config" "missing"
 # An ID is never interpolated raw into a script string.
 $PHP -r '
 require "private/bootstrap.php";
@@ -71,14 +84,15 @@ n=$($PHP -r 'echo json_decode(file_get_contents("/tmp/apply.txt"),true)["written
 [ "$n" -ge 10 ] && ok "$n pages written" || no "apply" "only $n pages written"
 chk "no page was missing its markers" \
   "$($PHP -r 'echo count(json_decode(file_get_contents("/tmp/apply.txt"),true)["missing"]);')" "0"
-chk "the tag is live on the homepage" \
-  "$(curl -s "$BASE/" | grep -c 'G-TESTGATE1')" "2"
-chk "and on an inner page" "$(curl -s "$BASE/contact/" | grep -c 'G-TESTGATE1')" "2"
-chk "and on a blog page" "$(curl -s "$BASE/blog/" | grep -c 'G-TESTGATE1')" "2"
+once=$(curl -s "$BASE/" | grep -c 'G-TESTGATE1')
+[ "$once" -ge 1 ] && ok "the tag is live on the homepage" || no "homepage tag" "not found"
+[ "$(curl -s "$BASE/contact/" | grep -c 'G-TESTGATE1')" -ge 1 ] && ok "and on an inner page" || no "inner page" "not found"
+[ "$(curl -s "$BASE/blog/" | grep -c 'G-TESTGATE1')" -ge 1 ] && ok "and on a blog page" || no "blog page" "not found"
+[ "$(curl -s "$BASE/lp/index.php?p=custom-crm" | grep -c 'G-TESTGATE1')" -ge 1 ] && ok "and on a landing page (rendered live)" || no "landing page" "the PHP pages never got the tags"
 
 # Applying twice must not stack copies.
 $PHP -r 'require "private/bootstrap.php"; Tags::apply();' >/dev/null
-chk "applying twice does not duplicate" "$(curl -s "$BASE/" | grep -c 'G-TESTGATE1')" "2"
+chk "applying twice does not duplicate" "$(curl -s "$BASE/" | grep -c 'G-TESTGATE1')" "$once"
 
 echo; echo "── 5. Removal is exact ────────────────────────────────"
 before=$(md5sum "$ROOT/contact/index.html" | cut -d' ' -f1)
@@ -103,7 +117,7 @@ $PHP -r 'require "private/bootstrap.php"; Settings::set("tag_ga4_on","1");'
 page=$(curl -s -b "$JAR" "$BASE/admin/?p=integrations")
 has "$page" "These set cookies"    && ok "warns that a cookie obligation now exists" || no "cookie warning" "missing"
 has "$page" "privacy policy"       && ok "points at the privacy policy"              || no "privacy link" "missing"
-has "$page" "~50KB"                && ok "states the real page-weight cost"          || no "weight" "not stated"
+has "$page" "measured"             && ok "states a measured page-weight cost"        || no "weight" "not stated as measured"
 has "$page" "no cookies"           && ok "distinguishes the harmless verification tags" || no "no-cookie pill" "missing"
 $PHP -r 'require "private/bootstrap.php"; Settings::set("tag_ga4_on","0"); Tags::apply();' >/dev/null
 

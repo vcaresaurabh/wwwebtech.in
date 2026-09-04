@@ -1,6 +1,6 @@
 # QA report — wwwebtech.in
 
-Generated 2026-08-26 00:08 UTC · **36/36 checks pass**.
+Generated 2026-09-04 01:12 UTC · **38/38 checks pass**.
 
 Re-run with `node tools/qa.mjs`. Every row below is an acceptance criterion
 from the build brief, not a vanity metric.
@@ -14,13 +14,13 @@ from the build brief, not a vanity metric.
 | ✅ | Fonts self-hosted and subset | 10 woff2 files, 251.4K total on disk |
 | ✅ | Page weight / ≤ 500KB | 258.8K transferred |
 | ✅ | Page weight /services/web-development/ ≤ 600KB | 258.4K transferred |
-| ✅ | Page weight /blog/website-speed-india/ ≤ 600KB | 194.2K transferred |
+| ✅ | Page weight /blog/website-speed-india/ ≤ 600KB | 194.3K transferred |
 
 ## Vitals
 
 | | Check | Detail |
 |---|---|---|
-| ✅ | LCP < 2.0s (throttled 4G / 4× CPU) | 0.68s |
+| ✅ | LCP < 2.0s (throttled 4G / 4× CPU) | 0.56s |
 | ✅ | LCP element is hero text, not an image | H1 |
 | ✅ | CLS < 0.05 | 0.0000 |
 
@@ -71,7 +71,7 @@ from the build brief, not a vanity metric.
 | | Check | Detail |
 |---|---|---|
 | ✅ | Titles ≤60ch, unique descriptions ≤155ch, one H1, canonical, valid JSON-LD | 20 pages clean |
-| ✅ | Sitemap lists every indexable page and nothing else | 18 URLs; missing []; extra [] |
+| ✅ | Sitemap lists every indexable page and nothing else | 19 URLs; missing []; extra [] |
 | ✅ | robots.txt present |  |
 | ✅ | .htaccess present |  |
 | ✅ | _redirects present |  |
@@ -84,5 +84,7 @@ from the build brief, not a vanity metric.
 
 | | Check | Detail |
 |---|---|---|
-| ✅ | skipped (--quick) | run without --quick to include |
+| ✅ | / — all four categories ≥ 95 | performance 98  ·  accessibility 100  ·  best-practices 100  ·  seo 100  (best of 3; perf 98/98/98) |
+| ✅ | /services/seo/ — all four categories ≥ 95 | performance 98  ·  accessibility 100  ·  best-practices 100  ·  seo 100  (best of 3; perf 98/98/98) |
+| ✅ | /blog/website-speed-india/ — all four categories ≥ 95 | performance 99  ·  accessibility 100  ·  best-practices 100  ·  seo 100  (best of 3; perf 99/99/99) |
 

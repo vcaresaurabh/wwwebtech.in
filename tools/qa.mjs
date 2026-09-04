@@ -14,6 +14,7 @@ import path from 'node:path';
 import zlib from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 import { serve, listPages } from './shots.mjs';
+import { SERVER_PAGES } from '../src/data.mjs';
 
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
@@ -389,8 +390,9 @@ const PAGES = listPages();
     const f = p.endsWith('.html') ? path.join(OUT, p.slice(1)) : path.join(OUT, p.slice(1), 'index.html');
     return !/name="robots" content="noindex/.test(fs.readFileSync(f, 'utf8'));
   });
-  const missing = indexable.filter(p => !inSitemap.includes(p));
-  const extra = inSitemap.filter(p => !indexable.includes(p));
+  const served = SERVER_PAGES.filter(s => s.inSitemap).map(s => s.path);
+  const missing = [...indexable, ...served].filter(p => !inSitemap.includes(p));
+  const extra = inSitemap.filter(p => !indexable.includes(p) && !served.includes(p));
   add('SEO', 'Sitemap lists every indexable page and nothing else',
       missing.length === 0 && extra.length === 0,
       `${inSitemap.length} URLs; missing ${JSON.stringify(missing)}; extra ${JSON.stringify(extra)}`);
@@ -455,7 +457,7 @@ if (!QUICK) {
       let chrome = null;
       try {
         // A fresh browser per run: a reused one crashes the tab in a container.
-        chrome = await launch({ chromeFlags: FLAGS });
+        chrome = await launch({ chromeFlags: FLAGS, ...(CHROME ? { chromePath: CHROME } : {}) });
         const r = await lighthouse(base + url, { port: chrome.port, output: 'json', logLevel: 'error' });
         if (r.lhr.runtimeError && !r.lhr.categories.performance?.score) note = r.lhr.runtimeError.code;
         else runs.push(Object.fromEntries(CORE.map(k => [k, Math.round((r.lhr.categories[k]?.score ?? 0) * 100)])));

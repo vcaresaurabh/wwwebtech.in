@@ -72,7 +72,11 @@ for s in $SLUGS; do
   has "$body" '"@type":"FAQPage"'     || issues="$issues faq-schema"
   has "$body" '"@type":"Service"'     || issues="$issues service-schema"
   has "$body" '@font-face'            || issues="$issues font-faces"
-  has "$body" 'WWT_TAGS_HEAD_START'   || issues="$issues tag-markers"
+  # Tags render live on these PHP pages (Tags::apply only rewrites .html), so
+  # the markers are gone. What matters for the budget is stronger anyway: no
+  # third-party script may be fetched before the page has painted. Every
+  # external load must sit inside the deferred loader.
+  grep -qE '<script[^>]+src="https?://' <<<"$body" && issues="$issues third-party-script-before-paint"
   [ "$(grep -c '<h1' <<<"$body")" = "1" ] || issues="$issues h1-count"
   grep -q '<link rel="stylesheet"' <<<"$body" && issues="$issues render-blocking-css"
   [ -z "$issues" ] && ok "$s — head correct" || no "$s head" "$issues"

@@ -28,12 +28,16 @@ export const SITE = {
      action back off the form, so the JavaScript path and the no-JavaScript
      path can never drift apart.
 
-       '/contact.php'    — the standalone mailer that ships with the static
-                           site. Emails only; nothing is stored.
        '/api/lead.php'   — the automation layer: stores the enquiry in MySQL,
                            emails it over authenticated SMTP, and puts it in
                            the admin panel. Requires automation/ to be
-                           deployed and the database created first. */
+                           deployed and the database created first.
+
+     The standalone mailer that used to ship as /contact.php is gone. It was
+     dead once the forms moved here, but it stayed live, accepting POSTs from
+     anyone and sending mail from the server — an open relay with a rate
+     limit. If the automation layer is ever removed, the fallback is the
+     503 page api/lead.php shows, which names the address to email. */
   leadEndpoint: '/api/lead.php',
 };
 
@@ -122,6 +126,18 @@ export const FOOTER_COMPANY = [
 ];
 
 /* --- Old → new URL map (§3). Drives .htaccess and _redirects. -- */
+/* Pages the static build does not produce but the live site serves — the
+   automation layer's PHP front controllers. The build's link checker admits
+   them, the sitemap lists the ones worth finding, and the QA gate agrees,
+   because all three read this one list. `servedBy` is verified to exist at
+   build time: an entry with no controller behind it is a 404 nothing catches. */
+export const SERVER_PAGES = [
+  { path: '/tools/free-website-audit/', servedBy: 'automation/webroot/tools/index.php',
+    inSitemap: true,  priority: '0.8' },
+  { path: '/lp/',                       servedBy: 'automation/webroot/lp/index.php',
+    inSitemap: false },   // campaign pages: reached from ads, not from search
+];
+
 export const REDIRECTS = [
   ['/services/website-development', '/services/web-development/'],
   ['/services/crm-systems',         '/services/crm-systems/'],

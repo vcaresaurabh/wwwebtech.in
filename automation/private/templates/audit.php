@@ -118,8 +118,13 @@ $stateWord = ['ok' => 'Good', 'warn' => 'Worth fixing', 'bad' => 'Fix this', 'in
 @media (prefers-reduced-motion:reduce){.aud__dots{animation:none;opacity:.8}}
 .aud__meta{color:var(--ink-3);font-size:.9rem;margin-top:var(--s5)}
 </style>
-</head>
+<?php $tagsHead = ''; $tagsBody = '';
+      if (!empty($ready) && class_exists('Tags')) {
+          try { $tagsHead = Tags::headHtml(); $tagsBody = Tags::bodyHtml(); } catch (Throwable) {}
+      } ?>
+<?= $tagsHead ?></head>
 <body>
+<?= $tagsBody ?>
 <a class="skip" href="#main">Skip to content</a>
 
 <header class="lp-head">

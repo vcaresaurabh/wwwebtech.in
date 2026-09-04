@@ -12,7 +12,7 @@ import fs from 'node:fs';
 import crypto from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { SITE, REDIRECTS } from './src/data.mjs';
+import { SITE, REDIRECTS, SERVER_PAGES } from './src/data.mjs';
 import { layout } from './src/layout.mjs';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
@@ -94,19 +94,6 @@ async function loadPages() {
 const outPathFor = (p) =>
   p.endsWith('.html') ? path.join(OUT, p.replace(/^\//, ''))
                       : path.join(OUT, p.replace(/^\//, ''), 'index.html');
-
-/* Pages this builder does not produce, but the live site serves: the
-   admin panel's PHP front controllers. Listed here so the link checker
-   does not fail on a link that is perfectly valid in production, and so
-   the ones worth finding appear in the sitemap. Each entry says which
-   file serves it, because an entry with no server behind it is a 404
-   that nothing catches. */
-const SERVER_PAGES = [
-  { path: '/tools/free-website-audit/', servedBy: 'automation/webroot/tools/index.php',
-    inSitemap: true,  priority: '0.8' },
-  { path: '/lp/',                       servedBy: 'automation/webroot/lp/index.php',
-    inSitemap: false },   // campaign pages: reached from ads, not from search
-];
 
 /* --- Link checker -------------------------------------------------
    Crawls the built folder. Any internal href that does not resolve to a
