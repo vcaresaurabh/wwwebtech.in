@@ -57,7 +57,7 @@ If you use something else, point its "not found" setting at `/404.html`.
 ## 3. The contact form
 
 **Already wired up.** wwwebtech.in runs on Hostinger PHP hosting, so the form
-posts to `contact.php`, which sits next to `index.html` in the folder you upload.
+posts to `/api/lead.php` in the automation layer, which stores the enquiry and emails it.
 It emails the enquiry to `contact@wwwebtech.in` and sends the person an
 acknowledgement — the same job the old Laravel controller did.
 
@@ -76,11 +76,11 @@ be active. There is nothing to configure in the code.
 
 ### If you ever move off PHP hosting
 
-On Netlify or Cloudflare Pages there is no PHP. Delete `contact.php`, then open
-`site/assets/js/main.js` and change:
+On a host with no PHP (Netlify, Cloudflare Pages) the automation layer cannot run. Point the
+form at a Formspree-style endpoint by setting `FORM_ENDPOINT` in `assets/js/main.js`:
 
 ```js
-const FORM_ENDPOINT = '/contact.php';
+const FORM_ENDPOINT = 'https://formspree.io/f/…';
 ```
 
 to a form URL from [Formspree](https://formspree.io) or
@@ -224,7 +224,7 @@ in one place. It isn't linked from the site and search engines are told to ignor
 **No analytics or tracking is loaded.** The site sets no cookies at all, which is why the
 privacy policy is short and there's no cookie banner.
 
-Your existing Google Analytics property (`G-3EMCNLKC8Q`) is present but commented out in
+Analytics and other tags are added from the admin panel (Integrations), never hard-coded;
 `src/layout.mjs`. To switch it on, remove the `<!--` and `-->` around that block, rebuild —
 **and update `/legal/privacy/` to say so**, because at that point you *are* collecting data
 in people's browsers.

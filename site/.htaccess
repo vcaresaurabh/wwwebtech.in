@@ -68,6 +68,20 @@ ErrorDocument 404 /404.html
   # WITHOUT includeSubDomains: flow.wwwebtech.in shares this domain and is not
   # this repo's to vouch for. Add it once every subdomain is known-https.
   Header always set Strict-Transport-Security "max-age=31536000"
+
+  # A Content-Security-Policy limited to the directives that cannot break a
+  # tag the owner adds later from the panel. script-src and connect-src are
+  # deliberately absent: a Tag Manager container can load anything, and a
+  # policy that silently blocks next month's pixel is worse than none.
+  #   frame-ancestors  nobody may put this site in an iframe (clickjacking)
+  #   form-action      forms may only post to this site
+  #   base-uri         no base-element hijack of relative URLs
+  #   object-src       no plugins
+  # The admin panel sets its own, stricter policy in admin/.htaccess.
+  Header always set Content-Security-Policy "frame-ancestors 'self'; form-action 'self'; base-uri 'self'; object-src 'none'; upgrade-insecure-requests"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+  Header always set Cross-Origin-Opener-Policy "same-origin-allow-popups"
 </IfModule>
 
 # The private folder and the path finder are code, never content.

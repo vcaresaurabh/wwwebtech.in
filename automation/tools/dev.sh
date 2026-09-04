@@ -19,14 +19,18 @@ DEVROOT="$PWD/.dev/webroot"
 # A devroot older than the last site build serves yesterday's HTML, and the
 # gates that diff it against site/ then report a failure that looks like a
 # real regression. Rebuild rather than make someone work that out again.
-if [ -f "$DEVROOT/index.html" ] && [ ../site/index.html -nt "$DEVROOT/index.html" ]; then
-  echo "  site/ is newer than the dev web root — rebuilding"
+# Compare content, not mtimes: cp -a preserves timestamps, so "is site/ newer"
+# answered wrongly once and a gate spent ten minutes failing on a stale copy.
+SITE_HASH=$(cd ../site && find . -type f -not -path './blog/*' -print0 | sort -z | xargs -0 cat | md5sum | cut -c1-32)
+if [ -f "$DEVROOT/index.html" ] && [ "$(cat "$DEVROOT/.site-hash" 2>/dev/null)" != "$SITE_HASH" ]; then
+  echo "  site/ has changed since the dev web root was built — rebuilding"
   set -- --rebuild
 fi
 if [ "${1:-}" = "--rebuild" ] || [ ! -f "$DEVROOT/index.html" ]; then
   echo "  building $DEVROOT from site/ + webroot/"
   rm -rf "$DEVROOT"; mkdir -p "$DEVROOT"
   cp -a ../site/. "$DEVROOT/"
+  echo "$SITE_HASH" > "$DEVROOT/.site-hash"
   for f in admin api lp tools serve.php _wwt.php; do
     ln -sfn "$PWD/webroot/$f" "$DEVROOT/$f"
   done

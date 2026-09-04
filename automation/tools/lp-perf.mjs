@@ -73,9 +73,13 @@ for (const [i, slug] of slugs.entries()) {
   if (i > 0) await settle(1500);
   /* The audit tool is a public page under the same budget, but it is not a
      landing page slug — it has its own controller. */
-  const url = slug === 'tools/free-website-audit'
-    ? `http://127.0.0.1:${port}/tools/index.php`
-    : `http://127.0.0.1:${port}/lp/index.php?p=${encodeURIComponent(slug)}`;
+  /* An argument starting with "/" is any page of the site — for measuring
+     the static pages under the same throttle and proxy as the landing pages. */
+  const url = slug.startsWith('/')
+    ? `http://127.0.0.1:${port}${slug}`
+    : slug === 'tools/free-website-audit'
+      ? `http://127.0.0.1:${port}/tools/index.php`
+      : `http://127.0.0.1:${port}/lp/index.php?p=${encodeURIComponent(slug)}`;
   /* One retry on a result that looks like harness noise rather than a page
      fault: a zero score means nothing loaded at all. */
   let lhr;
@@ -118,10 +122,17 @@ for (const [i, slug] of slugs.entries()) {
   if (seo  < 100) bad.push(`seo ${seo} < 100`);
   if (bad.length) failed++;
 
-  console.log(`\n  ${slug.includes('/') ? '/' + slug + '/' : '/lp/' + slug + '/'}`);
+  console.log(`\n  ${slug.startsWith('/') ? slug : slug.includes('/') ? '/' + slug + '/' : '/lp/' + slug + '/'}`);
   console.log(`    performance ${perf}   accessibility ${a11y}   best-practices ${bp}   seo ${seo}`);
   console.log(`    LCP ${show(lcp, 'ms')}   CLS ${show(cls)}   TBT ${show(tbt, 'ms')}`);
   console.log(`    LCP element: ${String(lcpEl).slice(0, 78)}`);
+  const shifts = lhr.audits['layout-shifts']?.details?.items ?? [];
+  for (const sh of shifts.slice(0, 2)) console.log(`    shift ${sh.score?.toFixed(4)}  ${sh.node?.snippet?.slice(0, 70)}`);
+  /* LHR_OUT=<dir> keeps the full report for anything this summary hides. */
+  if (process.env.LHR_OUT) {
+    const fs = await import('node:fs');
+    fs.writeFileSync(`${process.env.LHR_OUT}/lhr-${slug.replace(/[^a-z0-9]+/gi, '_') || 'root'}.json`, JSON.stringify(lhr));
+  }
   if (bad.length) {
     console.log(`    FAIL — ${bad.join('; ')}`);
     /* Name the failing audits, so a score is actionable rather than a number. */

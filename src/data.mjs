@@ -21,7 +21,6 @@ export const SITE = {
   instagram: 'https://www.instagram.com/wwwebtech.in/',       // [V:9] confirm this is current
   gbp:       null,          // [V:10] Google Business Profile URL — footer + LocalBusiness sameAs
   foundingYear: null,       // [V:2] founding year — hero proof line, about, schema foundingDate
-  analyticsId:  'G-3EMCNLKC8Q', // GA4 property already on the live site; injection is opt-in, see layout
 
   /* Where the contact form posts. This is the ONE place it is defined:
      the <form action> is built from it and assets/js/main.js reads the

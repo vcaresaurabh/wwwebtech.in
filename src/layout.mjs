@@ -58,12 +58,9 @@ ${noindex ? '<meta name="robots" content="noindex, nofollow">' : '<meta name="ro
 ${extraHead}
 <script type="application/ld+json">${schema}</script>
 
-<!-- ANALYTICS: the owner's GA4 property is ${SITE.analyticsId}. It is deliberately
-     NOT loaded — uncomment to switch it on, and update /legal/privacy/ to match.
-<script async src="https://www.googletagmanager.com/gtag/js?id=${SITE.analyticsId}"></script>
-<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}
-gtag('js',new Date());gtag('config','${SITE.analyticsId}');</script>
--->
+<!-- Analytics and other tags are managed from the admin panel (Integrations).
+     They are written between the markers below, deferred until the page has
+     drawn, and never hard-coded here. -->
 <!-- Tag manager. The admin panel writes between these markers and touches
      nothing else, so applying tags is repeatable and clearing them puts the
      page back exactly as the build left it. Do not remove. -->

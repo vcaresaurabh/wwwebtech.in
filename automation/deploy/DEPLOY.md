@@ -190,7 +190,7 @@ typo in it — go back and check the four database values character by character
 
 ## Step 6b — Point the contact form at the panel
 
-Until this step, the form still uses the old standalone mailer (`contact.php`),
+Until this step, the form has nowhere to post: `api/lead.php` answers with a 503 page that names the address to email,
 which emails you but records nothing. Do this **only after the test email in
 step 6 arrived**, so you are never without a working form.
 
@@ -199,7 +199,7 @@ Whoever maintains the site does this, in one line:
 1. Open `src/data.mjs` and change:
 
    ```js
-   leadEndpoint: '/contact.php',
+   leadEndpoint: '/api/lead.php',
    ```
 
    to:
@@ -212,7 +212,7 @@ Whoever maintains the site does this, in one line:
 3. Upload the `site/` folder again (or run `tools/deploy.sh`).
 
 From then on every enquiry is saved to the database first and emailed second,
-and appears under **Leads**. You can delete `contact.php` at that point.
+and appears under **Leads**.
 
 To check it worked: send yourself one more test enquiry and confirm it appears
 in the panel, not just in your inbox.
@@ -302,7 +302,7 @@ for blog teasers and tags. To remove the automation layer entirely:
 4. hPanel → Databases → delete the `uXXXXXXXXX_wwt` database.
 
 The website keeps working throughout. The contact form falls back to whatever
-`site/assets/js/main.js` has as its endpoint — set it back to `/contact.php`
+`site/assets/js/main.js` has as its endpoint — point it at a Formspree-style URL
 in `src/data.mjs` and rebuild if you remove the API.
 
 ---

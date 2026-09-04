@@ -84,8 +84,8 @@ after figures are a single run each.
 
 | Page | Before — perf · LCP · TBT | After — perf · LCP · TBT |
 |---|---|---|
-| `/` | 80 · 3.6s · 410ms | **98 · 2.04s · 0ms** |
-| `/about/` | 72 · 5.9s · — | **99 · 1.66s · 0ms** |
+| `/` | 80 · 3.6s · 410ms | **100 · 1.03s · 0ms** (98 · 2.04s after the tag fix alone) |
+| `/about/` | 72 · 5.9s · — | **99 · 1.72s · 0ms** |
 | `/services/web-development/` | 73 · 6.9s · — | **98 · 2.00s · 0ms** |
 | `/lp/custom-crm/` (never had tags) | 100 · 1.4s · 0ms | **100 · 1.36s · 0ms** |
 
@@ -93,12 +93,11 @@ Accessibility, best-practices and SEO are 100 on all four. Tag-script bytes
 fetched inside the measured window: 494KB before, **0** after — they load
 afterwards, by design.
 
-The homepage's 2.04s LCP is at the brief's 2.0s line, not under it, on this
-run. The same page measures 0.56s under identical throttling locally (`tools/qa.mjs`),
-so the difference is real network distance between Google's test agent and the
-Hostinger box, not page weight — the HTML is 20KB over the wire. There is no
-field data yet to say what real visitors see; the daily SEO job records the
-trend in `wwt_cwv`.
+After the tag fix alone the homepage sat at 2.04s — at the brief's 2.0s line,
+not under it. The remaining gap was the headline waiting for its web font
+(§2.7); with that fixed, first paint and largest paint are the same moment,
+1.03s. There is no field data yet to say what real visitors see; the daily SEO
+job records the trend in `wwt_cwv`.
 
 ### 2.2 · The privacy policy said things that were not true — fixed
 
@@ -125,7 +124,51 @@ audit tool's own page shipped at 66/185 characters. Gate is now 160, the
 prompt asks for 120–155, the three descriptions were rewritten by hand rather
 than cut.
 
-### 2.5 · Smaller things
+### 2.5 · Security headers the public site did not send — in the build, awaiting deploy
+
+The admin panel had a Content-Security-Policy; the public pages sent none,
+no `X-Frame-Options`, and no `Permissions-Policy`. They now send the subset
+that cannot break a tag added later from the panel: `frame-ancestors 'self'`
+(no clickjacking), `form-action 'self'` (forms post only to this site),
+`base-uri 'self'`, `object-src 'none'`, plus `X-Frame-Options: SAMEORIGIN`,
+a `Permissions-Policy` that denies camera, microphone, geolocation, payment
+and USB, and `Cross-Origin-Opener-Policy`. `script-src` is deliberately
+absent: a Tag Manager container can load anything, and a policy that silently
+blocks next month's pixel is worse than none.
+
+Honest status: my first attempt edited the *built* `.htaccess`, which
+`build.mjs` regenerates from a template, so the next build silently dropped
+it and the deploy went out without the headers. They are in the template now
+and will go live with the next deploy — which needs server access, see §3.1.
+
+### 2.6 · The inbox poller could starve — fixed before it ever ran live
+
+It took the *oldest* thirty unseen messages. A shared mailbox with thirty old
+unread newsletters would have re-read those every five minutes and never
+reached the reply that arrived this morning. It now reads newest first and
+keeps a watermark of the highest UID examined, so unmatched mail is left
+unread for the humans but never looked at twice. The version live on the
+server reads newest-first and re-reads one batch when the backlog exceeds
+thirty; it then converges and reads nothing new (verified: the watermark
+settled at the mailbox's highest UID). The corrected version — ascending
+order, watermark advanced only past what was actually read, so a backlog is
+worked through in three ticks with nothing re-read — is committed and ships
+with the next deploy.
+
+### 2.7 · Display font no longer gates the headline paint
+
+The headline is Fraunces and the largest thing on every page, so it is the
+LCP element, and Chrome records a new LCP candidate when a web font swaps
+into it. Fraunces is now `font-display: optional`: the headline paints at
+once in the metric-matched fallback (same width, same line breaks, no shift)
+and the real face is used whenever it is already cached — every visit after
+the first. Archivo and Plex Mono stay `swap`; they are small and preloaded.
+Measured live after deploying it: homepage FCP 1034ms, LCP 1034ms — the
+same instant — performance 100. The local runs had swung between 1.5s and
+2.3s, which is Lighthouse's noise floor in this container; the live figure is
+the one that counts, and it moved from 2.04s to 1.03s.
+
+### 2.8 · Smaller things
 
 - The QA gate's Lighthouse step could not find Chrome in this container and
   had been silently failing; it is wired to the same Chrome Playwright uses.
@@ -137,28 +180,48 @@ than cut.
 - The config file's documented model fallback was never actually read; it is
   now, and it named a retired model id.
 - Two copies of `schema.sql`, one live, one stale. The stale one is gone.
+- The unused GA4 id (`G-3EMCNLKC8Q`) and the commented-out analytics block
+  were still in the page template and the blog template; every doc that
+  told you to point the form at `contact.php` or delete it "at that point"
+  was rewritten. Tags are managed from the panel, never hard-coded.
+- The dev web root's staleness check compared mtimes, which `cp -a`
+  preserves, so a gate failed on a stale copy. It compares content now.
+- `tools/lp-perf.mjs` accepts any page path, prints layout-shift elements,
+  and keeps the full Lighthouse report with `LHR_OUT=<dir>`.
 
 ---
 
 ## 3 · What is left
 
-### 3.1 · Owner actions — nothing sends until these are done
+### 3.1 · Owner actions
 
-These are in the ready-to-paste Chrome runbook
-(`automation/deploy/CLAUDE-IN-CHROME-FINISH.md`), in this order:
+Done since the first draft of this audit, verified on the server:
 
-1. **Add the 5-minute cron** (`run.php frequent`) in hPanel. Without it a
-   reply can take an hour to stop a sequence.
-2. **Reading replies** — mailbox password in Settings. This is the mechanism
-   that keeps the automation polite.
-3. **Sender identity** — your name and a real address in Settings, plus the
-   alert address.
-4. Telegram bot (free, optional). Search Console sitemap resubmit.
-5. **Rotate every credential that was pasted into a chat**: mailbox, SSH,
+- **The 5-minute cron is installed and firing** — `funnel_tick` and
+  `inbox_poll` ran at 01:25:01 and 01:30:01. You added it.
+- **Sender identity is set** — Saurabh, `info@wwwebtech.in`, alerts to
+  `wwwebtech.in@gmail.com`. You did that too.
+- **Reading replies is wired** — the mailbox password was copied from
+  `config.php` into the IMAP setting on the server, so it was never
+  displayed. The poller connects, reads, and the watermark holds.
+
+**You rotated the SSH password while this pass was running** — correct, and
+it is why two fixes above are "awaiting deploy". To deploy without a password
+ever appearing in a chat again, add the deploy key in hPanel → Advanced →
+SSH Access; it is in `~/.ssh/wwwebtech_deploy.pub` on the build machine and
+`tools/deploy.sh` prefers it automatically. If you also rotated the mailbox
+password, update it in **both** Settings → Mailbox and Settings → Reading
+replies, or the reply poller starts failing with "could not connect".
+
+Still yours, from the Chrome runbook (`CLAUDE-IN-CHROME-FINISH.md`):
+
+1. Telegram bot (free, optional). Search Console sitemap resubmit.
+2. **Rotate every credential that was pasted into a chat**: mailbox, SSH,
    Anthropic, PageSpeed. The database password is deliberately not in the
    browser runbook — it needs a file changed on the server at the same moment
-   and is safer done over SSH.
-6. Then read `FUNNEL-SETUP.md` and turn the funnel on, one sequence at a time,
+   and is safer done over SSH. When you rotate the mailbox password, change it
+   in **both** Settings → Mailbox and Settings → Reading replies.
+3. Then read `FUNNEL-SETUP.md` and turn the funnel on, one sequence at a time,
    after reading what it wants to send.
 
 ### 3.2 · Decisions, not tasks
@@ -183,12 +246,13 @@ These are in the ready-to-paste Chrome runbook
 - **Homepage lab LCP is noisy** even with the tags deferred, because it is
   lab-only: there has never been enough traffic for field data. The stored
   history (`wwt_cwv`) will show the real trend within a few weeks of the fix.
-- **A Content-Security-Policy for the public site.** The admin panel has one;
-  the static pages do not. Adding one now means allowlisting Google's tag
-  hosts and using nonces for the inline styles — worth doing, not urgent.
+- **A full Content-Security-Policy with `script-src`.** The safe subset is
+  live now (§2.5). Going further means allowlisting every host the Tag
+  Manager container may load and nonces for the inline styles — worth doing
+  once the set of tags has settled, not before.
 - **The italic Fraunces face is the largest font (63KB).** It is used below
-  the fold and loads with `swap`, so it costs nothing measurable. It could be
-  subset further if it ever shows up in a trace.
+  the fold and now loads with `optional`, so it costs nothing measurable. It
+  could be subset further if it ever shows up in a trace.
 - **Blog posts are lab-tested via one static post.** Server-generated posts
   use the same shell, so this is low risk, but the QA gate does not fetch a
   generated post from the server.

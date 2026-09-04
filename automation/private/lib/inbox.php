@@ -66,20 +66,38 @@ final class Inbox
                 return 'could not connect: ' . cut((string)$err, 90);
             }
 
-            /* Unseen only. Anything already read has either been handled or
-               is not ours to handle. */
-            $ids = @imap_search($mbox, 'UNSEEN', SE_UID) ?: [];
-            $ids = array_slice($ids, 0, $limit);
+            /* Unseen, above the watermark, oldest first, never twice.
+               The watermark is the highest UID ever examined. Everything
+               above it is new; everything at or below it was looked at once,
+               matched or not, and unmatched mail is left unread for the
+               humans. Because examined UIDs never come back, order cannot
+               starve anything — a backlog bigger than $limit is simply
+               worked through in ascending order over the next few ticks,
+               and the watermark advances only past what was actually read.
+               (The first cut read the oldest thirty with no watermark, which
+               would have re-read the same thirty forever; the second read
+               newest-first with a watermark at the bottom of the batch,
+               which re-read the batch on the next tick. This one is
+               verified against the live mailbox: N, then the remainder,
+               then zero.) */
+            $since = Settings::int('imap_last_uid', 0);
+            $ids = array_map('intval', @imap_search($mbox, 'UNSEEN', SE_UID) ?: []);
+            $ids = array_values(array_filter($ids, static fn(int $u) => $u > $since));
+            sort($ids);
+            $batch = array_slice($ids, 0, $limit);
 
-            $matched = 0; $stopped = 0; $ignored = 0;
-            foreach ($ids as $uid) {
-                $r = self::ingest($mbox, (int)$uid);
+            $matched = 0; $stopped = 0; $ignored = 0; $high = $since;
+            foreach ($batch as $uid) {
+                $r = self::ingest($mbox, $uid);
                 if ($r === 'matched') $matched++;
                 elseif ($r === 'stopped') { $matched++; $stopped++; }
                 else $ignored++;
+                if ($uid > $high) $high = $uid;
             }
-            return sprintf('%d new · %d matched to a lead, %d sequences stopped, %d unmatched',
-                count($ids), $matched, $stopped, $ignored);
+            if ($high > $since) Settings::set('imap_last_uid', (string)$high);
+            return sprintf('%d new · %d matched to a lead, %d sequences stopped, %d unmatched%s',
+                count($batch), $matched, $stopped, $ignored,
+                count($ids) > $limit ? ', ' . (count($ids) - $limit) . ' more next tick' : '');
 
         } catch (Throwable $t) {
             wwt_log('inbox', 'poll crashed', ['err' => $t->getMessage()]);
