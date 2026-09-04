@@ -35,7 +35,7 @@ listed at the end in the order to flip them.
 | **Inbound replies** | IMAP polling, matched by `+lead` token, threading headers, then sender address (only when unambiguous). Auto-replies and bounces filtered. | `funnel_test.php` §2–4. IMAP is present on the production PHP build. |
 | **Free audit tool** | 17 checks against a real page plus Google field data. Honest by construction: wwwebtech.in scores 100, Zoho 86, neverssl 42. Fixture pages score 100 and 25. | `gate-phase7.sh` §3–5 |
 | **Offline conversions** | Google, Microsoft and Enhanced CSV feeds behind a rotatable key. Wrong or missing key → 404. Contact details leave only as SHA-256 hashes. | `gate-phase7.sh` §6; `funnel_test.php` §7 |
-| **Blog** | Scheduled generation under a monthly spend cap, quality gates (banned claims, similarity, structure, meta lengths), published from the database on every deploy. | `gate-phase5.sh` 29; 6 posts live |
+| **Blog** | Scheduled generation under a monthly spend cap, quality gates (banned claims, similarity, structure, meta lengths), published from the database on every deploy. | `gate-phase5.sh` 29; 8 posts live, 2 of them published unattended since the gate fix and within the new limits |
 | **SEO automation** | Daily: meta lengths, schema, sitemap, robots, AI-crawler access, Core Web Vitals, IndexNow. | `run.php seo_daily` — 8/8 on production |
 | **Security** | PDO prepared statements only, AES-256-GCM secrets, CSRF on every mutation, admin CSP, rate limits, honeypots, SSRF guard on the audit tool. | `gate-security.sh` 64 |
 | **Deploy safety** | Backup before every deploy, one-command rollback, refuses to run if a web-root directory is not excluded from `--delete`. | `tools/deploy.sh` guard, exercised |
@@ -124,7 +124,7 @@ audit tool's own page shipped at 66/185 characters. Gate is now 160, the
 prompt asks for 120–155, the three descriptions were rewritten by hand rather
 than cut.
 
-### 2.5 · Security headers the public site did not send — in the build, awaiting deploy
+### 2.5 · Security headers the public site did not send — added, live
 
 The admin panel had a Content-Security-Policy; the public pages sent none,
 no `X-Frame-Options`, and no `Permissions-Policy`. They now send the subset
@@ -138,8 +138,9 @@ blocks next month's pixel is worse than none.
 
 Honest status: my first attempt edited the *built* `.htaccess`, which
 `build.mjs` regenerates from a template, so the next build silently dropped
-it and the deploy went out without the headers. They are in the template now
-and will go live with the next deploy — which needs server access, see §3.1.
+it and that deploy went out without the headers. They are in the template
+now and **verified live** on the homepage, the landing pages, the audit tool;
+the admin panel keeps its own stricter policy.
 
 ### 2.6 · The inbox poller could starve — fixed before it ever ran live
 
@@ -147,13 +148,10 @@ It took the *oldest* thirty unseen messages. A shared mailbox with thirty old
 unread newsletters would have re-read those every five minutes and never
 reached the reply that arrived this morning. It now reads newest first and
 keeps a watermark of the highest UID examined, so unmatched mail is left
-unread for the humans but never looked at twice. The version live on the
-server reads newest-first and re-reads one batch when the backlog exceeds
-thirty; it then converges and reads nothing new (verified: the watermark
-settled at the mailbox's highest UID). The corrected version — ascending
-order, watermark advanced only past what was actually read, so a backlog is
-worked through in three ticks with nothing re-read — is committed and ships
-with the next deploy.
+unread for the humans but never looked at twice. **Verified on the live
+mailbox after deploy**: with the watermark reset, three polls read 30, then
+10, then 0 — the whole backlog once, nothing twice — and the watermark
+settled at the mailbox's highest UID.
 
 ### 2.7 · Display font no longer gates the headline paint
 
@@ -205,13 +203,15 @@ Done since the first draft of this audit, verified on the server:
   `config.php` into the IMAP setting on the server, so it was never
   displayed. The poller connects, reads, and the watermark holds.
 
-**You rotated the SSH password while this pass was running** — correct, and
-it is why two fixes above are "awaiting deploy". To deploy without a password
-ever appearing in a chat again, add the deploy key in hPanel → Advanced →
-SSH Access; it is in `~/.ssh/wwwebtech_deploy.pub` on the build machine and
-`tools/deploy.sh` prefers it automatically. If you also rotated the mailbox
-password, update it in **both** Settings → Mailbox and Settings → Reading
-replies, or the reply poller starts failing with "could not connect".
+SSH access was refused for a while mid-pass and then worked again with the
+same password, so it was a transient denial, not a rotation — which means the
+SSH password is **still the one pasted into chat** and still needs rotating.
+To deploy without a password ever appearing in a chat again, add the deploy
+key in hPanel → Advanced → SSH Access; it is in `~/.ssh/wwwebtech_deploy.pub`
+on the build machine and `tools/deploy.sh` prefers it automatically. When you
+rotate the mailbox password, update it in **both** Settings → Mailbox and
+Settings → Reading replies, or the reply poller starts failing with "could
+not connect".
 
 Still yours, from the Chrome runbook (`CLAUDE-IN-CHROME-FINISH.md`):
 
