@@ -25,7 +25,7 @@ listed at the end in the order to flip them.
 |---|---|---|
 | **Static site** | 20 pages from `src/`, rendered by `build.mjs`. Inlined CSS, self-hosted subset fonts, no image above the fold, motion stack loads only on desktop after idle. | `node tools/qa.mjs` — **38/38** (Lighthouse best-of-3, local 4G/4×CPU throttle: `/` 98·100·100·100, `/services/seo/` 98·100·100·100, blog post 99·100·100·100; LCP 0.56s, CLS 0.000) |
 | **Link integrity** | Every internal href must resolve or the build fails. Server-rendered pages are declared in `SERVER_PAGES` and their controller must exist. | `node build.mjs` — "OK - every internal link and anchor resolves" |
-| **Admin panel** | 13 pages: dashboard, leads, lead, analytics, conversations, funnel, landing pages, audits, blog, SEO health, integrations, settings, login. | `automation/tools/render-pages.php` — 13/13 on production |
+| **Admin panel** | 14 pages (Connections added 5 September): dashboard, leads, lead, analytics, conversations, funnel, landing pages, audits, blog, SEO health, integrations, settings, login. | `automation/tools/render-pages.php` — 13/13 on production |
 | **Leads** | Saved to MySQL first, emailed second. Scored and banded on arrival. 30+ fields including click IDs, UTMs, consent version, dwell and pages seen. | `gate-phase2.sh` 59, `gate-phase3.sh` 47 |
 | **Landing pages** | 7 pages under `/lp/`, one controller, data files per page. Message-match whitelist, sticky A/B variant, multi-step form that is a plain form first. | `gate-lp.sh` 49; PageSpeed mobile **100 / 100 / 100**, LCP 1.4s, CLS 0.002 |
 | **Notifications** | Company email, personal email, Telegram — three independent channels, each wrapped so one failing cannot block the others. | `gate-phase4.sh` 80 |
@@ -40,7 +40,7 @@ listed at the end in the order to flip them.
 | **Security** | PDO prepared statements only, AES-256-GCM secrets, CSRF on every mutation, admin CSP, rate limits, honeypots, SSRF guard on the audit tool. | `gate-security.sh` 64 |
 | **Deploy safety** | Backup before every deploy, one-command rollback, refuses to run if a web-root directory is not excluded from `--delete`. | `tools/deploy.sh` guard, exercised |
 
-Total: **9 gate scripts + 1 unit suite, 511 assertions, all passing** at the time of writing.
+Total: **10 gate scripts + 2 unit suites, 590 assertions, all passing** — updated 5 September after the Connections hub landed (see FEATURES.md §3.18).
 
 ---
 

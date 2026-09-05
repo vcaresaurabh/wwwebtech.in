@@ -1,6 +1,6 @@
 # wwwebtech.in — complete feature inventory
 
-Written 4 September 2026 as a self-contained handoff. Everything here is
+Written 4 September 2026, updated 5 September with the Connections hub, as a self-contained handoff. Everything here is
 deployed and verified on the live site unless a line says otherwise. Paste
 this whole file into a conversation to give it the full picture; nothing in
 it depends on having the repository open.
@@ -19,7 +19,7 @@ it depends on having the repository open.
 | Repository | github.com/vcaresaurabh/wwwebtech.in, branch `development`, public |
 | Deploy | `tools/deploy.sh` — backup first, rsync, verify, republish, one-command rollback |
 | Live PageSpeed (mobile) | Homepage **100** / LCP 1.03s · Landing pages **100** / LCP 1.4s · About 99 · all pages 100 on accessibility, best-practices and SEO |
-| Test coverage | 9 gate scripts + 1 unit suite, **511 assertions**, all passing; QA gate 38/38 |
+| Test coverage | 10 gate scripts + 2 unit suites, **590 assertions**, all passing; QA gate 38/38 |
 
 ---
 
@@ -285,7 +285,7 @@ database afterwards.
 
 ### 3.13 · Admin panel (`/admin/`)
 
-13 pages: **Dashboard** (KPIs, unactioned leads, job heartbeat with last run
+14 pages: **Dashboard** (KPIs, unactioned leads, job heartbeat with last run
 and status per job, one-click "run now" for any job), **Leads** (filter,
 search, pipeline counts, bulk status, CSV export of exactly the filtered set,
 score and band column), **Lead** (everything captured, scoring reasons, full
@@ -296,7 +296,7 @@ countries, bots, per-page — all server-side), **Conversations**,
 enrolments, per-sequence review switch), **Landing pages** (visitors,
 enquiries, rate, hot, won, abandoned per page; A/B comparison; unmatched
 keywords), **Audits**, **Blog**, **SEO health**, **Integrations**,
-**Settings**, **Login**.
+**Connections** (see 3.18), **Settings**, **Login**.
 
 - **Accounts and roles**: admin and read-only viewer; first-run setup that
   closes itself once an account exists; password change; **TOTP two-factor
@@ -353,7 +353,7 @@ key or a development password; security gate of 64 static checks including
 `gate-phase4` (notifications and analytics, 80) · `gate-phase5` (blog, 29) ·
 `gate-phase6` (tags, 33) · `gate-phase7` (inbox, audit tool, panel,
 conversions, 28) · `gate-lp` (landing pages, 49) · `gate-funnel` (27) ·
-`gate-security` (64) · `tests/funnel_test.php` (64 assertions on the
+`gate-connections` (50) · `gate-security` (69) · `tests/connections_test.php` (53) · `tests/funnel_test.php` (64 assertions on the
 judgement calls: when it stops, refuses, what it costs, what it never says) ·
 `tools/qa.mjs` (38 acceptance checks: budgets, vitals, axe, no-JS, motion,
 interactive, HTML validity, SEO, Lighthouse best-of-3) · `render-pages.php`
