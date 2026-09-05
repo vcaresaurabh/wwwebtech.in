@@ -417,12 +417,13 @@ and `QA-REPORT.md` at the repository root.
 | Kill switch | clear |
 | Review before send | on for every sequence |
 | WhatsApp | off, not configured |
-| Telegram | not configured — Connections → Telegram |
-| Reading replies (IMAP) | **on**, verified — Connections → Email — reading replies |
+| Telegram | **connected** (bot @wwwebtech_alerts_bot, one chat) — Connections → Telegram |
+| Reading replies (IMAP) | **connected**, verified live; test send passed SPF and DKIM on arrival |
 | Sender identity | set (Saurabh, info@wwwebtech.in, alerts to the owner's Gmail) |
 | Analytics tags | GA4 + GTM + Ads on, deferred |
 | Blog | on, daily, under cap |
 | Cron | all four installed and firing |
+| PageSpeed key | **error** — the key is restricted in a way that blocks the server (Google returns 403 from the host's IP). The Connections card says which setting to change. The daily Core Web Vitals check fails until it is fixed. |
 | Offline conversions | feeds built; Google Ads side not yet configured |
 
 ---

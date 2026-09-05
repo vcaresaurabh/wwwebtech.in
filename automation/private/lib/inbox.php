@@ -84,11 +84,15 @@ final class Inbox
             return ['ok' => false, 'connected' => !str_contains(strtolower($err), 'connect'), 'unread' => 0, 'subjects' => [], 'error' => $err];
         }
         try {
+            /* Only imap_search and imap_fetchheader: Hostinger's IMAP build
+               lacks imap_num_msgs and imap_headerinfo, and this test died
+               on production the first time it ran there. */
             $unread = count(@imap_search($m, 'UNSEEN', SE_UID) ?: []);
-            $total  = (int)@imap_num_msgs($m);
+            $all = array_map('intval', @imap_search($m, 'ALL', SE_UID) ?: []);
+            rsort($all);
             $subjects = [];
-            for ($n = $total; $n > max(0, $total - 3); $n--) {
-                $h = @imap_headerinfo($m, $n);
+            foreach (array_slice($all, 0, 3) as $uid) {
+                $h = @imap_rfc822_parse_headers((string)@imap_fetchheader($m, $uid, FT_UID));
                 if ($h) $subjects[] = self::decode((string)($h->subject ?? '(no subject)'));
             }
             return ['ok' => true, 'connected' => true, 'unread' => $unread, 'subjects' => $subjects, 'error' => ''];
@@ -120,7 +124,8 @@ final class Inbox
                         if (preg_match('/\bspf=(pass|fail|softfail|neutral|none)/', $all, $x))  $out['spf']  = $x[1] === 'pass';
                         if (preg_match('/\bdkim=(pass|fail|none|neutral)/', $all, $x))          $out['dkim'] = $x[1] === 'pass';
                     }
-                    @imap_delete($m, (string)$uid, FT_UID); @imap_expunge($m);   // the test message is noise
+                    /* The test message is noise; remove it where the build allows. */
+                    if (function_exists('imap_delete')) { @imap_delete($m, (string)$uid, FT_UID); if (function_exists('imap_expunge')) @imap_expunge($m); }
                     return $out;
                 }
             } finally { @imap_close($m); }
