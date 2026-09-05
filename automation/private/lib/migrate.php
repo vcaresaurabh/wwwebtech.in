@@ -16,7 +16,7 @@
 declare(strict_types=1);
 
 /** Bump this when you add a step below. */
-const WWT_SCHEMA_VERSION = 5;
+const WWT_SCHEMA_VERSION = 6;
 
 final class Schema
 {
@@ -222,6 +222,72 @@ function wwt_migrate(bool $force = false): int
        the form and carried on the audit row until a lead exists. */
     $done += (int)Schema::addColumn('wwt_audits', 'name',
         "VARCHAR(100) NOT NULL DEFAULT '' AFTER host");
+
+    /* ── v6 · The Connections hub ─────────────────────────────
+       Every credential in one place. This is the one-time move of what
+       still lived in config.php (the mailbox password, the test key) into
+       the encrypted store, plus the seed rows for the lists the cards
+       edit. Values are never logged — only which keys moved. */
+    /* WhatsApp template registry gains what Meta reports. Column adds are
+       idempotent, so they sit outside the version guard: a column added to
+       this list after an install has already reached v6 still arrives. */
+    $done += (int)Schema::addColumn('wwt_templates', 'language',  "VARCHAR(10) NOT NULL DEFAULT 'en' AFTER category");
+    $done += (int)Schema::addColumn('wwt_templates', 'synced_at', "DATETIME NULL AFTER approval");
+    $done += (int)Schema::addColumn('wwt_templates', 'meta_status', "VARCHAR(30) NOT NULL DEFAULT '' AFTER synced_at");
+
+    if ($have < 6) {
+        $moved = [];
+
+        /* The mailbox: config.php → store, only where the store is empty. */
+        $smtp = (array)cfg('smtp', []);
+        if ((string)Settings::get('smtp_user', '') === '' && (string)($smtp['user'] ?? '') !== '') {
+            Settings::set('smtp_host',      (string)($smtp['host'] ?? 'smtp.hostinger.com'));
+            Settings::set('smtp_port',      (string)(int)($smtp['port'] ?? 465));
+            Settings::set('smtp_secure',    (string)($smtp['secure'] ?? 'ssl'));
+            Settings::set('smtp_user',      (string)$smtp['user']);
+            Settings::set('smtp_from_name', (string)($smtp['from_name'] ?? 'Wwwebtech'));
+            $moved[] = 'smtp settings';
+        }
+        if (Secrets::get('smtp_pass', '') === '' && (string)($smtp['pass'] ?? '') !== '') {
+            Secrets::put('smtp_pass', (string)$smtp['pass']);
+            $moved[] = 'mailbox password';
+        }
+        /* The default sender identity is those same keys, named. */
+        if (!Settings::json('mail_identities', [])) {
+            $ms = Mailer::settings();
+            if ($ms['user'] !== '') {
+                Mailer::saveIdentities([[
+                    'id' => 'default', 'label' => 'Company mailbox', 'name' => $ms['from_name'],
+                    'email' => $ms['user'], 'host' => $ms['host'], 'port' => $ms['port'], 'secure' => $ms['secure'],
+                    'user' => $ms['user'], 'use' => ['system', 'funnel', 'manual'],
+                ]]);
+                $moved[] = 'default identity';
+            }
+        }
+        /* The test-submission key. */
+        if (Secrets::get('cron_key', '') === '' && (string)cfg('cron_key', '') !== '') {
+            Secrets::put('cron_key', (string)cfg('cron_key', ''));
+            $moved[] = 'test key';
+        }
+        /* Lists, seeded from the single values they replace. */
+        if (!Settings::json('alert_recipients', [])) {
+            $seed = Notify::recipients();
+            if ($seed) { Notify::saveRecipients($seed); $moved[] = 'alert recipients'; }
+        }
+        if (!Settings::json('telegram_recipients', []) && (string)Settings::get('telegram_chat_id', '') !== '') {
+            Telegram::saveRecipients([['chat_id' => (string)Settings::get('telegram_chat_id'), 'title' => 'Primary chat',
+                                       'kind' => 'private chat', 'roles' => ['all']]]);
+            $moved[] = 'telegram recipient';
+        }
+        /* The webhook verify token is ours to generate. */
+        if ((string)Settings::get('wa_verify_token', '') === '') {
+            Settings::set('wa_verify_token', bin2hex(random_bytes(20)));
+            $moved[] = 'webhook verify token';
+        }
+        if ((string)Settings::get('wa_api_version', '') === '') Settings::set('wa_api_version', 'v21.0');
+
+        if ($moved) { $done++; audit('connections_migrate', 'moved into the encrypted store: ' . implode(', ', $moved)); }
+    }
 
     Settings::set('schema_version', (string)WWT_SCHEMA_VERSION);
     if ($done) audit('schema_migrate', 'to v' . WWT_SCHEMA_VERSION . ', ' . $done . ' change(s)');

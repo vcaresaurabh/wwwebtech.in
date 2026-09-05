@@ -363,10 +363,49 @@ through a gzipping proxy for any page). All passing.
 ### 3.17 · Documentation (in `automation/deploy/`)
 
 `DEPLOY.md` (step-by-step, no terminal needed), `OWNER-GUIDE.md` (the panel
-in plain English), `FUNNEL-SETUP.md` (turning the follow-up on, in order),
+in plain English), `FUNNEL-SETUP.md` (turning the follow-up on, in order), `CONNECTIONS-PLAN.md`,
 `WHATSAPP-SETUP.md`, `ADS-SETUP.md`, `TEST-AFTER-DEPLOY.md`, three
 `CLAUDE-IN-CHROME-*.md` runbooks for browser-side setup, plus `AUDIT.md`
 and `QA-REPORT.md` at the repository root.
+
+### 3.18 · Connections hub (`/admin/?p=connections`)
+
+- **One page for every credential**: Email sending (identities with their
+  own SMTP logins, provider presets, a DNS strip for SPF / DKIM / DMARC with
+  the exact record to add), Email reading (IMAP, with a test that shows the
+  unread count and three subjects), Alert recipients (addresses with roles:
+  every lead / hot only / daily digest / system errors), Telegram (token,
+  **Detect my chat** via `getUpdates`, multiple chats with roles), WhatsApp
+  (all six Meta values, webhook URL and generated verify token, template
+  registry synced from Meta, spend meter, switch locked until a test passes
+  and the business is recorded as verified), Claude (key, model, cap with a
+  live meter), PageSpeed (key), and the feed / test keys with Rotate.
+- **Same anatomy on every card**: four-state status pill, numbered guide
+  inside the card with exact click-paths and "looks like" examples,
+  paste-time format validation, a real Test with per-sub-check results and
+  plain-English failure reasons that link to the guide step, last tested /
+  last used.
+- **Secrets are write-only**: last four characters, who set it, when;
+  Replace or Remove, never edit. Never echoed in HTML, logs, errors or test
+  output — proven by the security gate.
+- **A failed test never overwrites a working credential**: new values are
+  held pending until a test passes or the owner presses "Save anyway".
+- **WhatsApp webhook** at `/api/whatsapp-webhook.php`: verification
+  handshake against the generated token; every POST must carry a valid
+  `X-Hub-Signature-256` (HMAC with the App Secret) or is refused; inbound
+  customer messages land on the lead's thread and **stop their sequence**,
+  and "STOP" opts them out — exactly as email replies do.
+- **Daily health check** (`connections_health`): non-sending checks of every
+  configured connection; a Connected → Error transition alerts on every
+  channel that still works, lights a dot on the nav item and a line on the
+  Dashboard. **Daily digest** email to whoever asked for it.
+- **Migration v6** moved the mailbox password and the test key out of
+  `config.php` into the encrypted store; `config.php` now holds only the
+  database login, the encryption key, salts and paths. Restoring a backup on
+  a new server needs `config.php` too, or every secret is unreadable.
+- Verified by `tools/gate-connections.sh` and `tests/connections_test.php`;
+  the security gate gained assertions that no page echoes a secret and no
+  log line is handed one.
 
 ---
 
@@ -378,8 +417,8 @@ and `QA-REPORT.md` at the repository root.
 | Kill switch | clear |
 | Review before send | on for every sequence |
 | WhatsApp | off, not configured |
-| Telegram | not configured |
-| Reading replies (IMAP) | **on**, verified |
+| Telegram | not configured — Connections → Telegram |
+| Reading replies (IMAP) | **on**, verified — Connections → Email — reading replies |
 | Sender identity | set (Saurabh, info@wwwebtech.in, alerts to the owner's Gmail) |
 | Analytics tags | GA4 + GTM + Ads on, deferred |
 | Blog | on, daily, under cap |

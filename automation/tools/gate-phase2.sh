@@ -218,14 +218,19 @@ PYX
 pass=$((pass + $(echo "$csvpass" | cut -d' ' -f1)))
 fail=$((fail + $(echo "$csvpass" | cut -d' ' -f2)))
 
-echo; echo "── 9. Mailbox settings (owner-editable) ───────────────"
-stok=$(curl -s -b "$JAR" "$BASE/admin/?p=settings" | grep -o 'name="_csrf" value="[a-f0-9]*"' | head -1 | sed 's/.*value="//;s/"//')
-curl -s -b "$JAR" -o /dev/null -X POST --data-urlencode "_csrf=$stok" \
-  --data-urlencode "action=mail" --data-urlencode "host=127.0.0.1" --data-urlencode "port=2525" \
-  --data-urlencode "secure=none" --data-urlencode "user=no-reply@wwwebtech.in" \
-  --data-urlencode "pass=gate-secret-password" --data-urlencode "from_name=Wwwebtech website" \
-  --data-urlencode "lead_email=contact@wwwebtech.in" --data-urlencode "reply_promise=1 business day" \
-  --data-urlencode "lead_ack_enabled=1" "$BASE/admin/?p=settings"
+echo; echo "── 9. Mailbox settings (owner-editable, on Connections) ──"
+# The mailbox is entered on the Connections page now. Saving with a password
+# tests it against the sink before writing, so a passing save is proof of
+# delivery as well as of storage.
+PHP=${PHP:-/usr/bin/php8.3}
+ctok(){ curl -s -b "$JAR" "$BASE/admin/?p=connections" | grep -o 'name="_csrf" value="[a-f0-9]*"' | head -1 | sed 's/.*value="//;s/"//'; }
+$PHP -r 'require "private/bootstrap.php"; DB::run("DELETE FROM wwt_rate_limit WHERE bucket LIKE ?", ["conntest:%"]); Settings::set("conn_status_mail_send","");'
+curl -s -b "$JAR" -o /dev/null -X POST --data-urlencode "_csrf=$(ctok)" \
+  --data-urlencode "action=save_identity" --data-urlencode "id=default" --data-urlencode "label=Company mailbox" \
+  --data-urlencode "name=Wwwebtech website" --data-urlencode "email=no-reply@wwwebtech.in" --data-urlencode "preset=other" \
+  --data-urlencode "host=127.0.0.1" --data-urlencode "port=2525" --data-urlencode "secure=none" \
+  --data-urlencode "user=no-reply@wwwebtech.in" --data-urlencode "password=gate-secret-password" \
+  --data-urlencode "use[]=system" --data-urlencode "use[]=funnel" --data-urlencode "use[]=manual" "$BASE/admin/?p=connections"
 
 stored=$(q "SELECT v FROM wwt_settings WHERE k='smtp_pass'")
 case "$stored" in
@@ -237,45 +242,42 @@ has "$stored" "gate-secret-password" \
   || ok "plaintext password is nowhere in the database"
 
 # Saving the form again with a blank password must not wipe the stored one.
-stok=$(curl -s -b "$JAR" "$BASE/admin/?p=settings" | grep -o 'name="_csrf" value="[a-f0-9]*"' | head -1 | sed 's/.*value="//;s/"//')
-curl -s -b "$JAR" -o /dev/null -X POST --data-urlencode "_csrf=$stok" \
-  --data-urlencode "action=mail" --data-urlencode "host=127.0.0.1" --data-urlencode "port=2525" \
-  --data-urlencode "secure=none" --data-urlencode "user=no-reply@wwwebtech.in" \
-  --data-urlencode "pass=" --data-urlencode "from_name=Wwwebtech website" \
-  --data-urlencode "lead_email=contact@wwwebtech.in" --data-urlencode "reply_promise=1 business day" \
-  --data-urlencode "lead_ack_enabled=1" "$BASE/admin/?p=settings"
+$PHP -r 'require "private/bootstrap.php"; DB::run("DELETE FROM wwt_rate_limit WHERE bucket LIKE ?", ["conntest:%"]);'
+curl -s -b "$JAR" -o /dev/null -X POST --data-urlencode "_csrf=$(ctok)" \
+  --data-urlencode "action=save_identity" --data-urlencode "id=default" --data-urlencode "label=Company mailbox" \
+  --data-urlencode "name=Wwwebtech website" --data-urlencode "email=no-reply@wwwebtech.in" --data-urlencode "preset=other" \
+  --data-urlencode "host=127.0.0.1" --data-urlencode "port=2525" --data-urlencode "secure=none" \
+  --data-urlencode "user=no-reply@wwwebtech.in" --data-urlencode "password=" \
+  --data-urlencode "use[]=system" --data-urlencode "use[]=funnel" --data-urlencode "use[]=manual" "$BASE/admin/?p=connections"
 chk "blank password field keeps the saved one" \
   "$(q "SELECT v FROM wwt_settings WHERE k='smtp_pass'")" "$stored"
 
-# An unticked checkbox sends nothing at all, so the handler has to read its
+# The acknowledgement toggle lives with the follow-up preferences. An
+# unticked checkbox sends nothing at all, so the handler has to read its
 # absence as "off" rather than "unchanged" — and then put it back.
-stok=$(curl -s -b "$JAR" "$BASE/admin/?p=settings" | grep -o 'name="_csrf" value="[a-f0-9]*"' | head -1 | sed 's/.*value="//;s/"//')
-curl -s -b "$JAR" -o /dev/null -X POST --data-urlencode "_csrf=$stok" \
-  --data-urlencode "action=mail" --data-urlencode "host=127.0.0.1" --data-urlencode "port=2525" \
-  --data-urlencode "secure=none" --data-urlencode "user=no-reply@wwwebtech.in" \
-  --data-urlencode "from_name=Wwwebtech website" --data-urlencode "lead_email=contact@wwwebtech.in" \
-  --data-urlencode "reply_promise=1 business day" "$BASE/admin/?p=settings"
+stok(){ curl -s -b "$JAR" "$BASE/admin/?p=settings" | grep -o 'name="_csrf" value="[a-f0-9]*"' | head -1 | sed 's/.*value="//;s/"//'; }
+curl -s -b "$JAR" -o /dev/null -X POST --data-urlencode "_csrf=$(stok)" \
+  --data-urlencode "action=funnel_prefs" --data-urlencode "sender_name=Saurabh" --data-urlencode "sender_email=" \
+  --data-urlencode "hot_at=60" --data-urlencode "warm_at=35" --data-urlencode "reply_promise=1 business day" "$BASE/admin/?p=settings"
 chk "unticking the acknowledgement box turns it off" \
   "$(q "SELECT v FROM wwt_settings WHERE k='lead_ack_enabled'")" "0"
-stok=$(curl -s -b "$JAR" "$BASE/admin/?p=settings" | grep -o 'name="_csrf" value="[a-f0-9]*"' | head -1 | sed 's/.*value="//;s/"//')
-curl -s -b "$JAR" -o /dev/null -X POST --data-urlencode "_csrf=$stok" \
-  --data-urlencode "action=mail" --data-urlencode "host=127.0.0.1" --data-urlencode "port=2525" \
-  --data-urlencode "secure=none" --data-urlencode "user=no-reply@wwwebtech.in" \
-  --data-urlencode "from_name=Wwwebtech website" --data-urlencode "lead_email=contact@wwwebtech.in" \
-  --data-urlencode "reply_promise=1 business day" --data-urlencode "lead_ack_enabled=1" "$BASE/admin/?p=settings"
+curl -s -b "$JAR" -o /dev/null -X POST --data-urlencode "_csrf=$(stok)" \
+  --data-urlencode "action=funnel_prefs" --data-urlencode "sender_name=Saurabh" --data-urlencode "sender_email=" \
+  --data-urlencode "hot_at=60" --data-urlencode "warm_at=35" --data-urlencode "reply_promise=1 business day" \
+  --data-urlencode "lead_ack_enabled=1" "$BASE/admin/?p=settings"
 chk "and ticking it turns it back on" \
   "$(q "SELECT v FROM wwt_settings WHERE k='lead_ack_enabled'")" "1"
 
 chk "the panel never echoes the password back" \
-  "$(curl -s -b "$JAR" "$BASE/admin/?p=settings" | grep -c 'gate-secret-password')" "0"
+  "$(curl -s -b "$JAR" "$BASE/admin/?p=connections" | grep -c 'gate-secret-password')" "0"
 
 before=$(ls -1 "$MAILDIR"/*.eml 2>/dev/null | wc -l | tr -d ' ')
-stok=$(curl -s -b "$JAR" "$BASE/admin/?p=settings" | grep -o 'name="_csrf" value="[a-f0-9]*"' | head -1 | sed 's/.*value="//;s/"//')
-curl -s -b "$JAR" -o /dev/null -X POST --data-urlencode "_csrf=$stok" \
-  --data-urlencode "action=mail_test" "$BASE/admin/?p=settings"
+$PHP -r 'require "private/bootstrap.php"; DB::run("DELETE FROM wwt_rate_limit WHERE bucket LIKE ?", ["conntest:%"]);'
+curl -s -b "$JAR" -o /dev/null -X POST --data-urlencode "_csrf=$(ctok)" \
+  --data-urlencode "action=test_identity" --data-urlencode "id=default" "$BASE/admin/?p=connections"
 sleep 1
 after=$(ls -1 "$MAILDIR"/*.eml 2>/dev/null | wc -l | tr -d ' ')
-[ "$after" -gt "$before" ] && ok "\"Send me a test email\" delivers using the saved password" \
+[ "$after" -gt "$before" ] && ok "\"Send me a test\" delivers using the saved password" \
   || no "test email" "nothing was delivered"
 
 echo; echo "───────────────────────────────────────────────────────"

@@ -36,12 +36,6 @@ if ($action !== '') {
                 audit('seo_run', cut($line, 200), Auth::email());
                 redirect('/admin/?p=seo', Jobs::allFailed($results) ? 'bad' : 'ok', cut($line, 240));
             }
-            case 'save_key': {
-                $k = trim((string)($_POST['pagespeed_key'] ?? ''));
-                Secrets::put('pagespeed_key', $k);
-                audit('seo_key', $k === '' ? 'cleared' : 'set', Auth::email());
-                redirect('/admin/?p=seo', 'ok', $k === '' ? 'PageSpeed key cleared.' : 'PageSpeed key saved.');
-            }
         }
     } catch (Throwable $t) {
         redirect('/admin/?p=seo', 'bad', $t->getMessage());
@@ -180,16 +174,7 @@ layout_top('SEO health', 'seo');
         </tbody></table></div>
     <?php endif; ?>
 
-    <?php if (Auth::isAdmin()): ?>
-    <form method="post" style="margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--rule)">
-      <?= Csrf::field() ?><input type="hidden" name="action" value="save_key">
-      <div class="field"><label for="psk">PageSpeed API key</label>
-        <input id="psk" name="pagespeed_key" type="password" autocomplete="off"
-               placeholder="<?= $hasKey ? 'saved — leave blank to keep it' : 'free, from the Google Cloud console' ?>">
-        <p class="hint">Stored encrypted. Blank clears it.</p></div>
-      <button class="btn btn--sm" type="submit">Save</button>
-    </form>
-    <?php endif; ?>
+    <p class="small muted" style="margin-top:.8rem">The PageSpeed key lives on <a href="/admin/?p=connections#c-pagespeed" style="text-decoration:underline">Connections</a>.</p>
   </section>
 
   <section class="card">

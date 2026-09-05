@@ -39,6 +39,95 @@ final class Inbox
     public static function port(): int    { return max(1, Settings::int('imap_port', 993)); }
     public static function user(): string { return trim((string)Settings::get('imap_user', '')); }
     public static function pass(): string { return Secrets::get('imap_pass', ''); }
+    public static function secure(): string
+    {
+        $v = (string)Settings::get('imap_secure', 'ssl');
+        return in_array($v, ['ssl', 'tls', 'none'], true) ? $v : 'ssl';
+    }
+    public static function folder(): string { return trim((string)Settings::get('imap_folder', '')) ?: 'INBOX'; }
+
+    /** The imap_open mailbox spec, from the four settings. */
+    public static function spec(string $folder = ''): string
+    {
+        $flags = ['ssl' => '/imap/ssl', 'tls' => '/imap/tls', 'none' => '/imap/notls'][self::secure()];
+        return sprintf('{%s:%d%s}%s', self::host(), self::port(), $flags, $folder ?: self::folder());
+    }
+
+    private static function open(string $pass = '')
+    {
+        return @imap_open(self::spec(), self::user(), $pass !== '' ? $pass : self::pass(), 0, 1);
+    }
+
+    /* ── The Connections card ──────────────────────────────── */
+
+    /** Connect and sign in, nothing else. */
+    public static function probe(string $pass = ''): array
+    {
+        if (!self::available()) return ['ok' => false, 'error' => 'PHP on this server has no IMAP extension.'];
+        $m = self::open($pass);
+        if ($m === false) return ['ok' => false, 'error' => (string)(imap_last_error() ?: 'connection refused')];
+        @imap_close($m);
+        return ['ok' => true, 'error' => ''];
+    }
+
+    /**
+     * Sign in, count unread, show the three most recent subjects — so the
+     * owner can see it is the right mailbox, without the panel reading a
+     * single message body.
+     */
+    public static function test(string $pass = ''): array
+    {
+        if (!self::available()) return ['ok' => false, 'connected' => false, 'unread' => 0, 'subjects' => [], 'error' => 'PHP on this server has no IMAP extension.'];
+        $m = self::open($pass);
+        if ($m === false) {
+            $err = (string)(imap_last_error() ?: 'connection refused');
+            return ['ok' => false, 'connected' => !str_contains(strtolower($err), 'connect'), 'unread' => 0, 'subjects' => [], 'error' => $err];
+        }
+        try {
+            $unread = count(@imap_search($m, 'UNSEEN', SE_UID) ?: []);
+            $total  = (int)@imap_num_msgs($m);
+            $subjects = [];
+            for ($n = $total; $n > max(0, $total - 3); $n--) {
+                $h = @imap_headerinfo($m, $n);
+                if ($h) $subjects[] = self::decode((string)($h->subject ?? '(no subject)'));
+            }
+            return ['ok' => true, 'connected' => true, 'unread' => $unread, 'subjects' => $subjects, 'error' => ''];
+        } finally { @imap_close($m); }
+    }
+
+    /**
+     * Find a message by a marker in its subject and read the receiving
+     * server's Authentication-Results header — the only honest way to
+     * know whether SPF and DKIM actually passed.
+     */
+    public static function authResultsFor(string $marker, int $waitSec = 10): array
+    {
+        $out = ['found' => false, 'spf' => null, 'dkim' => null, 'raw' => ''];
+        if (!self::available() || !self::configured()) return $out;
+        $deadline = time() + $waitSec;
+        do {
+            $m = self::open();
+            if ($m === false) return $out;
+            try {
+                $ids = @imap_search($m, 'SUBJECT "' . addslashes($marker) . '"', SE_UID) ?: [];
+                if ($ids) {
+                    $uid = (int)max($ids);
+                    $hdr = (string)@imap_fetchheader($m, $uid, FT_UID);
+                    $out['found'] = true;
+                    $out['raw'] = cut($hdr, 4000);
+                    if (preg_match_all('/^Authentication-Results:(.*?)(?=^\S|\z)/msi', $hdr, $mm)) {
+                        $all = strtolower(implode(' ', $mm[1]));
+                        if (preg_match('/\bspf=(pass|fail|softfail|neutral|none)/', $all, $x))  $out['spf']  = $x[1] === 'pass';
+                        if (preg_match('/\bdkim=(pass|fail|none|neutral)/', $all, $x))          $out['dkim'] = $x[1] === 'pass';
+                    }
+                    @imap_delete($m, (string)$uid, FT_UID); @imap_expunge($m);   // the test message is noise
+                    return $out;
+                }
+            } finally { @imap_close($m); }
+            sleep(2);
+        } while (time() < $deadline);
+        return $out;
+    }
 
     public static function whyNot(): string
     {
@@ -58,8 +147,7 @@ final class Inbox
 
         $mbox = null;
         try {
-            $spec = sprintf('{%s:%d/imap/ssl}INBOX', self::host(), self::port());
-            $mbox = @imap_open($spec, self::user(), self::pass(), 0, 1);
+            $mbox = self::open();
             if ($mbox === false) {
                 $err = imap_last_error() ?: 'connection refused';
                 wwt_log('inbox', 'connect failed', ['err' => $err]);

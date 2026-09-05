@@ -54,7 +54,7 @@ Analytics::record([
     'utm_campaign' => field($_POST, 'utm_campaign', 120),
     'event'        => field($_POST, 'e', 40),
     'detail'       => field($_POST, 'd', 255),
-    'test'         => field($_POST, 't', 80) === (string)cfg('cron_key', "\0"),
+    'test'         => wwt_test_key() !== '' && field($_POST, 't', 80) === wwt_test_key(),
 ]);
 
 http_response_code(204);

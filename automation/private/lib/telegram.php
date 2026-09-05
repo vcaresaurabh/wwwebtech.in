@@ -37,6 +37,99 @@ final class Telegram
         return self::token() !== '' && self::chatId() !== '';
     }
 
+    /* ── The Connections card ──────────────────────────────── */
+
+    /** Proves the token. */
+    public static function getMe(string $token = ''): array
+    {
+        $token = $token ?: self::token();
+        if ($token === '') return ['ok' => false, 'username' => '', 'name' => '', 'error' => 'no token'];
+        $r = Http::get(self::API . $token . '/getMe', ['timeout' => 10]);
+        $j = json_decode((string)$r['body'], true);
+        if ($r['status'] === 200 && !empty($j['ok'])) {
+            return ['ok' => true, 'username' => (string)($j['result']['username'] ?? ''),
+                    'name' => (string)($j['result']['first_name'] ?? ''), 'error' => ''];
+        }
+        return ['ok' => false, 'username' => '', 'name' => '',
+                'error' => (string)($j['description'] ?? ($r['error'] ?: 'HTTP ' . $r['status']))];
+    }
+
+    /**
+     * Every distinct chat that has messaged the bot recently, so the owner
+     * can click theirs instead of hunting for a chat id. Telegram keeps
+     * updates for 24 hours; an empty list means nobody has messaged the bot.
+     */
+    public static function recentChats(string $token = ''): array
+    {
+        $token = $token ?: self::token();
+        if ($token === '') return ['ok' => false, 'chats' => [], 'error' => 'no token'];
+        $r = Http::get(self::API . $token . '/getUpdates?limit=100&allowed_updates=' . rawurlencode('["message","my_chat_member"]'), ['timeout' => 10]);
+        $j = json_decode((string)$r['body'], true);
+        if ($r['status'] !== 200 || empty($j['ok'])) {
+            return ['ok' => false, 'chats' => [], 'error' => (string)($j['description'] ?? ($r['error'] ?: 'HTTP ' . $r['status']))];
+        }
+        $seen = [];
+        foreach ((array)($j['result'] ?? []) as $u) {
+            $chat = $u['message']['chat'] ?? $u['my_chat_member']['chat'] ?? null;
+            if (!is_array($chat) || !isset($chat['id'])) continue;
+            $id = (string)$chat['id'];
+            $kind = (string)($chat['type'] ?? 'private');
+            $title = $kind === 'private'
+                ? trim(((string)($chat['first_name'] ?? '')) . ' ' . ((string)($chat['last_name'] ?? '')))
+                    ?: '@' . (string)($chat['username'] ?? $id)
+                : (string)($chat['title'] ?? $id);
+            $seen[$id] = ['id' => $id, 'title' => cut($title, 60),
+                          'kind' => $kind === 'private' ? 'private chat' : ($kind === 'channel' ? 'channel' : 'group')];
+        }
+        return ['ok' => true, 'chats' => array_values($seen), 'error' => ''];
+    }
+
+    /**
+     * Recipients with roles: all alerts / hot leads only / approval
+     * requests only. The legacy single chat id is recipient zero with
+     * every role, so nothing that existed before this list stops working.
+     *
+     * @return list<array{chat_id:string,title:string,kind:string,roles:list<string>}>
+     */
+    public static function recipients(): array
+    {
+        $list = Settings::json('telegram_recipients', []);
+        $out = [];
+        foreach ($list as $r) {
+            if (!is_array($r) || (string)($r['chat_id'] ?? '') === '') continue;
+            $out[] = ['chat_id' => (string)$r['chat_id'], 'title' => (string)($r['title'] ?? ''),
+                      'kind' => (string)($r['kind'] ?? 'private chat'),
+                      'roles' => array_values(array_intersect((array)($r['roles'] ?? ['all']), ['all', 'hot', 'approvals']))];
+        }
+        if (!$out && self::chatId() !== '') {
+            $out[] = ['chat_id' => self::chatId(), 'title' => 'Primary chat', 'kind' => 'private chat', 'roles' => ['all']];
+        }
+        return $out;
+    }
+
+    public static function saveRecipients(array $list): void
+    {
+        Settings::set('telegram_recipients', json_encode(array_values($list), JSON_UNESCAPED_UNICODE) ?: '[]');
+        /* Keep the legacy key pointing at the first "all" recipient, so the
+           old readers keep working. */
+        foreach ($list as $r) {
+            if (in_array('all', (array)($r['roles'] ?? []), true)) { Settings::set('telegram_chat_id', (string)$r['chat_id']); return; }
+        }
+        Settings::set('telegram_chat_id', $list ? (string)$list[0]['chat_id'] : '');
+    }
+
+    /** Send to every recipient that has this role (or "all"). */
+    public static function sendTo(string $role, string $text, array $opt = []): array
+    {
+        $sent = 0; $errors = [];
+        foreach (self::recipients() as $r) {
+            if (!in_array('all', $r['roles'], true) && !in_array($role, $r['roles'], true)) continue;
+            $x = self::send($text, $opt + ['chat_id' => $r['chat_id']]);
+            if ($x['ok']) $sent++; else $errors[] = $r['title'] . ': ' . $x['error'];
+        }
+        return ['ok' => $sent > 0 || !$errors, 'sent' => $sent, 'error' => implode('; ', $errors)];
+    }
+
     /**
      * Send a message. Never throws: an alert that fails must not take the
      * enquiry down with it, and the enquiry is already saved by this point.
@@ -63,9 +156,10 @@ final class Telegram
         }
 
         try {
-            $r = Http::postJson(self::API . self::token() . '/sendMessage', $payload, ['timeout' => 10]);
+            $token = (string)($opt['token'] ?? '') ?: self::token();
+            $r = Http::postJson(self::API . $token . '/sendMessage', $payload, ['timeout' => 10]);
             $j = json_decode($r['body'], true);
-            if ($r['status'] === 200 && !empty($j['ok'])) return ['ok' => true, 'error' => ''];
+            if ($r['status'] === 200 && !empty($j['ok'])) { Connections::touch('telegram'); return ['ok' => true, 'error' => '']; }
 
             /* Telegram's own error text is far more useful than the status
                code — "chat not found" means the owner never messaged the
@@ -128,20 +222,27 @@ final class Telegram
         if ($phone !== '') $buttons[] = ['WhatsApp them', 'https://wa.me/' . $phone];
         $buttons[] = ['Open in panel', $site . '/admin/?p=lead&id=' . (int)($l['id'] ?? 0)];
 
-        return self::send(implode("\n", $lines), ['buttons' => $buttons]);
+        $r = self::sendTo($band === 'hot' ? 'hot' : 'all', implode("\n", $lines), ['buttons' => $buttons]);
+        return ['ok' => $r['ok'], 'error' => $r['error']];
     }
 
     /** The +15 minute nudge when a hot lead has not been opened (§6.3 step 1). */
     public static function escalate(array $l, int $minutes): array
     {
         $site = rtrim((string)cfg('site.url', ''), '/');
-        return self::send(
+        return self::sendRole(
             '⏰ <b>Still unopened after ' . $minutes . ' minutes</b>' . "\n\n"
             . self::esc((string)$l['name']) . ' — ' . strtoupper(Score::label((string)$l['band']))
             . ', score ' . (int)$l['score'] . "\n"
             . self::esc(cut((string)$l['message'], 200)),
-            ['buttons' => [['Open it now', $site . '/admin/?p=lead&id=' . (int)$l['id']]]]
+            ['buttons' => [['Open it now', $site . '/admin/?p=lead&id=' . (int)$l['id']]]], 'hot'
         );
+    }
+
+    private static function sendRole(string $text, array $opt, string $role): array
+    {
+        $r = self::sendTo($role, $text, $opt);
+        return ['ok' => $r['ok'], 'error' => $r['error']];
     }
 
     /** Used by the Settings page to prove the setup works. */

@@ -64,10 +64,12 @@ That is a real afternoon of work, and none of it can be done from this panel.
 
 ## Turning it on
 
-**Settings → WhatsApp**
+**Connections → WhatsApp**
 
-Paste the token and the phone number ID, set the monthly cap, tick **Use
-WhatsApp for customers**, save.
+The card walks you through all six values from Meta, shows the webhook
+URL and verify token to paste into Meta, syncs the template list, and
+unlocks the switch only after one test has passed and the business is
+recorded as verified.
 
 Start with the cap at ₹200. It is enough for a month of ordinary volume and
 cheap enough that a mistake is not expensive.

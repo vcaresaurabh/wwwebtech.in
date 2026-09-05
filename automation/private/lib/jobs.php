@@ -304,6 +304,18 @@ final class Jobs
                 (int)$tags['written']);
         },
 
+        /* Every configured connection, checked without sending anything.
+           A card that was fine yesterday and is broken today alerts the
+           owner on whichever channel still works. */
+        'connections_health' => static function (): string {
+            return Connections::health();
+        },
+
+        /* One email each morning to whoever asked for it. */
+        'daily_digest' => static function (): string {
+            return Notify::digest();
+        },
+
         /* Regenerate the machine-readable files and ping IndexNow. Runs after
            anything is published; safe to run on its own. */
         'seo_publish_ping' => static function (): string {
@@ -327,7 +339,7 @@ final class Jobs
            it in minutes, not at the top of the next hour. */
         'frequent' => ['funnel_tick', 'inbox_poll', 'audit_run'],
         'hourly'   => ['analytics_hourly', 'funnel_tick', 'inbox_poll', 'audit_run'],
-        'daily'    => ['analytics_hourly', 'analytics_prune', 'blog_daily', 'seo_daily'],
+        'daily'    => ['analytics_hourly', 'analytics_prune', 'blog_daily', 'seo_daily', 'connections_health', 'daily_digest'],
         'weekly'   => ['seo_weekly'],
         ];
     }

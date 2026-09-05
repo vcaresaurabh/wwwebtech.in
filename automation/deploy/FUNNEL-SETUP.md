@@ -12,7 +12,7 @@ the first two done.
 
 ## 1 · Decide who the messages come from
 
-**Settings → Follow-up and scoring**
+**Settings → Follow-up and scoring** (the names) and **Connections → Email — sending** (the mailbox)
 
 Two fields matter:
 
@@ -23,7 +23,7 @@ Automated mail signed by a real person gets replies. Mail from `noreply@` gets
 filed. More importantly, replies to that address are how the system learns
 someone has answered — and a reply is what stops the sequence.
 
-Set **Also alert this address** to whatever you check on your phone. Every new
+On **Connections → Alert recipients**, add whatever address you check on your phone. Every new
 lead sends a copy there as well as to the company address, because the company
 inbox is not where you notice things at 9pm.
 
@@ -35,9 +35,9 @@ inbox is not where you notice things at 9pm.
 
 ## 2 · Let it read replies
 
-**Settings → Reading replies**
+**Connections → Email — reading replies**
 
-Fill in the mailbox from step 1:
+Pick the provider preset and fill in the mailbox from step 1:
 
 | Field | Hostinger value |
 |---|---|
@@ -46,7 +46,7 @@ Fill in the mailbox from step 1:
 | Mailbox | the same address as the sender |
 | Password | that mailbox's password |
 
-Press **Check for replies now**. It should say how many messages it read.
+Press **Check the mailbox**. It shows the unread count and the three most recent subjects. It should say how many messages it read.
 
 If it says PHP has no IMAP extension, that is the host's build and not
 something you can fix from the panel. Everything else still works — you will
@@ -75,7 +75,7 @@ sample data suggested, not because it is a law.
 
 ## 4 · Telegram alerts (optional, free)
 
-**Settings → Telegram alerts**
+**Connections → Telegram** — the card walks you through this; the short version:
 
 1. On your phone, message **@BotFather** on Telegram, send `/newbot`, and follow
    it. It gives you a token.
@@ -83,9 +83,8 @@ sample data suggested, not because it is a law.
 3. Message your new bot once, saying anything. **This step is not optional** —
    Telegram does not let a bot start a conversation, so an unmessaged bot fails
    with "chat not found".
-4. Get the chat ID: open `https://api.telegram.org/bot<TOKEN>/getUpdates` in a
-   browser and copy the number in `"chat":{"id":...}`.
-5. Paste it in, save, and press **Send a test message**.
+4. Press **Detect my chat** — the panel finds you. Click yourself.
+5. Press **Send a test**.
 
 This is internal only. No customer ever sees Telegram. It exists because email
 notifications get missed and a phone buzz does not.

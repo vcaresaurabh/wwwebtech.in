@@ -96,4 +96,16 @@ final class Secrets
         $n = strlen($plain);
         return str_repeat('•', min(12, max(6, $n)));
     }
+
+    /**
+     * Dots plus the last four characters — enough for the owner to tell
+     * two keys apart, not enough to use. Values shorter than eight stay
+     * fully hidden, because four of eight is half the secret.
+     */
+    public static function maskLast4(string $plain): string
+    {
+        if ($plain === '') return '';
+        if (strlen($plain) < 8) return str_repeat('•', 8);
+        return str_repeat('•', 8) . substr($plain, -4);
+    }
 }

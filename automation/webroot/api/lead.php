@@ -95,7 +95,7 @@ if (!RateLimit::allow($ipKey, Leads::rateMax(), Leads::RATE_WINDOW)) {
    one, but tagged so QA traffic can be filtered and purged without ever
    touching a genuine enquiry. Decided here because the partial-lead path
    below needs it too. */
-$isTestFlag = ((string)($_POST['_test'] ?? '')) === (string)cfg('cron_key', "\0");
+$isTestFlag = wwt_test_key() !== '' && ((string)($_POST['_test'] ?? '')) === wwt_test_key();
 
 /* ── Time trap (§3.4) ──────────────────────────────────────
    A form rendered and submitted inside three seconds was not read by a
@@ -188,12 +188,20 @@ if (!Mailer::configured()) {
     Telegram::newLead(DB::one('SELECT * FROM wwt_leads WHERE id = ?', [$id]) ?? []);
 } else {
     $fan = Notify::newLead($id);
-    $company = $fan['channels']['company'] ?? ['ok' => false, 'error' => 'not attempted'];
-    Leads::markMail($id, !empty($company['ok']) ? 'sent' : 'failed', (string)($company['error'] ?? ''));
+    /* Recipients are a list now, each its own attempt. The lead's mail
+       status is "sent" if any address got it, "failed" with the first
+       reason if none did, and "skipped" if nobody is set up to receive it. */
+    $emails = array_filter((array)($fan['channels'] ?? []), static fn($k) => str_starts_with((string)$k, 'email:'), ARRAY_FILTER_USE_KEY);
+    $sentOk = (bool)array_filter($emails, static fn($r) => !empty($r['ok']) && empty($r['skipped']));
+    $firstErr = '';
+    foreach ($emails as $r) { if (empty($r['ok'])) { $firstErr = (string)($r['error'] ?? 'failed'); break; } }
+    if (!$emails)      Leads::markMail($id, 'skipped', 'no alert recipients set up');
+    elseif ($sentOk)   Leads::markMail($id, 'sent', '');
+    else               Leads::markMail($id, 'failed', $firstErr ?: 'not delivered');
 
     /* The acknowledgement is best-effort and never affects the answer the
        visitor sees — their message is already saved and already with us. */
-    if (!empty($company['ok']) && Settings::bool('lead_ack_enabled', true)) {
+    if ($sentOk && Settings::bool('lead_ack_enabled', true)) {
         $a = Leads::ackEmail($d);
         $ack = Mailer::send([
             'to'       => $d['email'],

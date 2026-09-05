@@ -72,6 +72,7 @@ final class Claude
 
     public static function apiKey(): string
     {
+        if (self::$keyOverride !== '') return self::$keyOverride;
         return Secrets::get('anthropic_key', (string)cfg('anthropic.api_key', ''));
     }
 
@@ -253,7 +254,16 @@ final class Claude
     }
 
     /** A cheap round trip to prove the key works, for the Settings page. */
-    public static function testKey(): array
+    /** A key under test, before it is saved. Set only for the duration of one call. */
+    private static string $keyOverride = '';
+
+    public static function testKey(string $key = ''): array
+    {
+        self::$keyOverride = $key;
+        try { return self::testKeyNow(); } finally { self::$keyOverride = ''; }
+    }
+
+    private static function testKeyNow(): array
     {
         $r = self::message(
             'Reply with exactly one word.',

@@ -240,3 +240,13 @@ function human_bytes(int $b): string {
     while ($b >= 1024 && $i < 3) { $b = intdiv($b, 1024); $i++; }
     return $b . ' ' . $u[$i];
 }
+
+/**
+ * The key that marks a form submission as a test. Lives in the encrypted
+ * store (Connections → Feed & test keys); config.php is only the fallback
+ * for an install that has not migrated yet.
+ */
+function wwt_test_key(): string {
+    try { $k = Secrets::get('cron_key', ''); } catch (Throwable) { $k = ''; }
+    return $k !== '' ? $k : (string)cfg('cron_key', '');
+}

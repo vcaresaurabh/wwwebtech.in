@@ -219,6 +219,16 @@ in the panel, not just in your inbox.
 
 ---
 
+
+> **What `config.php` holds after the Connections hub:** the database
+> login, the encryption key (`secret_key`), the session and analytics salts,
+> and the site paths. **Nothing else.** Every mailbox password, API key and
+> token lives in the database, encrypted with that key — so a database backup
+> contains your secrets in unreadable form, and **restoring a backup on a new
+> server also needs this `config.php` copied across**, or every secret is
+> unreadable and the panel reports each connection as not configured. Keep a
+> copy of `config.php` somewhere safe that is not the server.
+
 ## Step 7 — Set up the scheduled jobs
 
 Hostinger has no `crontab` command; jobs are added through the panel.

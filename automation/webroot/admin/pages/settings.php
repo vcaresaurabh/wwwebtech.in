@@ -62,57 +62,6 @@ if ($action !== '') {
                 redirect('/admin/?p=settings', 'ok', 'Account removed.');
             }
 
-            case 'mail': {
-                foreach (['host', 'user', 'from_name'] as $k) {
-                    Settings::set('smtp_' . $k, field($_POST, $k, 190));
-                }
-                $port = (int)($_POST['port'] ?? 465);
-                if ($port < 1 || $port > 65535) throw new InvalidArgumentException('That port number is not valid.');
-                Settings::set('smtp_port', (string)$port);
-                Settings::set('smtp_secure', in_array(field($_POST, 'secure', 8), ['ssl', 'tls', 'none'], true)
-                    ? field($_POST, 'secure', 8) : 'ssl');
-
-                $to = field($_POST, 'lead_email', 150);
-                if ($to !== '' && !filter_var($to, FILTER_VALIDATE_EMAIL)) {
-                    throw new InvalidArgumentException('That enquiry address is not a valid email.');
-                }
-                Settings::set('lead_email', $to);
-
-                /* Blank means "leave it alone" — the field is never populated
-                   with the real password, so saving the form must not wipe it. */
-                $pass = (string)($_POST['pass'] ?? '');
-                if ($pass !== '') {
-                    if (!Secrets::available()) throw new RuntimeException('Cannot store the password securely — see DEPLOY.md.');
-                    Secrets::put('smtp_pass', $pass);
-                }
-
-                Settings::set('reply_promise', field($_POST, 'reply_promise', 60) ?: '1 business day');
-                Settings::set('lead_ack_enabled', isset($_POST['lead_ack_enabled']) ? '1' : '0');
-                audit('settings_change', 'mailbox', Auth::email());
-                redirect('/admin/?p=settings', 'ok', 'Mailbox settings saved.');
-            }
-
-            case 'mail_test': {
-                if (!Mailer::configured()) throw new RuntimeException('Fill in the mailbox settings first.');
-                $to = Mailer::leadRecipient();
-                $r  = Mailer::send([
-                    'to'      => $to,
-                    'subject' => 'Test from the Wwwebtech panel',
-                    'text'    => "This is a test message from the admin panel.\n\n"
-                               . "If you are reading it, enquiries from the website will reach you here.\n\n"
-                               . 'Sent ' . local_time(gmdate('Y-m-d H:i:s')) . " IST\n",
-                ], true);
-                audit('mail_test', $r['ok'] ? 'ok' : 'failed: ' . $r['error'], Auth::email());
-                if (!$r['ok']) {
-                    $_SESSION['mail_log'] = cut((string)($r['log'] ?? ''), 4000);
-                    throw new RuntimeException('Could not send: ' . $r['error']);
-                }
-                redirect('/admin/?p=settings', 'ok', 'Test sent to ' . $to . '. Check that mailbox.');
-            }
-
-            /* ── The funnel's own settings ─────────────────────
-               Kept out of Preferences because these decide what a
-               customer receives, not how the panel behaves. */
             case 'funnel_prefs': {
                 Settings::set('funnel_sender_name',  field($_POST, 'sender_name', 80));
                 $se = strtolower(field($_POST, 'sender_email', 150));
@@ -120,8 +69,11 @@ if ($action !== '') {
                     throw new RuntimeException('That sender address is not a valid email.');
                 }
                 Settings::set('funnel_sender_email', $se);
-                Settings::set('personal_email',      strtolower(field($_POST, 'personal_email', 150)));
                 Settings::set('funnel_review_ping',  isset($_POST['review_ping']) ? '1' : '0');
+                /* The automatic acknowledgement to the person who wrote in.
+                   An unticked box sends nothing, so absence means off. */
+                Settings::set('lead_ack_enabled', isset($_POST['lead_ack_enabled']) ? '1' : '0');
+                Settings::set('reply_promise', field($_POST, 'reply_promise', 60) ?: '1 business day');
                 $wording = trim((string)($_POST['consent_wording'] ?? ''));
                 if ($wording !== '') Settings::set('consent_wording', cut($wording, 400));
 
@@ -134,44 +86,6 @@ if ($action !== '') {
                 Settings::set('score_warm_at', (string)$warm);
                 audit('settings_change', 'funnel', Auth::email());
                 redirect('/admin/?p=settings', 'ok', 'Saved.');
-            }
-
-            case 'telegram': {
-                $tok = trim((string)($_POST['telegram_token'] ?? ''));
-                if ($tok !== '') Secrets::put('telegram_token', $tok);
-                Settings::set('telegram_chat_id', field($_POST, 'telegram_chat_id', 40));
-                audit('settings_change', 'telegram', Auth::email());
-                redirect('/admin/?p=settings', 'ok', 'Saved.');
-            }
-            case 'telegram_test': {
-                $r = Telegram::test();
-                redirect('/admin/?p=settings', empty($r['ok']) ? 'bad' : 'ok',
-                    empty($r['ok']) ? (string)($r['error'] ?? 'Telegram refused it.')
-                                    : 'Sent. Check the chat.');
-            }
-
-            case 'whatsapp': {
-                $tok = trim((string)($_POST['wa_token'] ?? ''));
-                if ($tok !== '') Secrets::put('wa_token', $tok);
-                Settings::set('wa_phone_id',       field($_POST, 'wa_phone_id', 40));
-                Settings::set('wa_enabled',        isset($_POST['wa_enabled']) ? '1' : '0');
-                Settings::set('wa_monthly_cap_inr', (string)max(0, min(100000, (int)($_POST['wa_cap'] ?? 200))));
-                audit('settings_change', 'whatsapp', Auth::email());
-                redirect('/admin/?p=settings', 'ok', 'Saved.');
-            }
-
-            case 'imap': {
-                $pw = (string)($_POST['imap_pass'] ?? '');
-                if ($pw !== '') Secrets::put('imap_pass', $pw);
-                Settings::set('imap_host', field($_POST, 'imap_host', 120));
-                Settings::set('imap_port', (string)max(1, min(65535, (int)($_POST['imap_port'] ?? 993))));
-                Settings::set('imap_user', strtolower(field($_POST, 'imap_user', 150)));
-                audit('settings_change', 'imap', Auth::email());
-                redirect('/admin/?p=settings', 'ok', 'Saved.');
-            }
-            case 'imap_test': {
-                $out = Inbox::poll(5);
-                redirect('/admin/?p=settings', 'ok', 'Checked the mailbox: ' . cut($out, 160));
             }
 
             case 'prefs': {
@@ -290,85 +204,11 @@ layout_top('Settings', 'settings');
   </section>
 
   <section class="card" style="grid-column:1/-1">
-    <h2>Mailbox</h2>
-    <p class="small muted" style="margin:.3rem 0 .9rem">
-      Enquiries are sent through this mailbox using its own password, so they are
-      properly signed and land in the inbox rather than in spam. Create it in
-      hPanel → Emails, then put the details here.
-      <?php if (!Secrets::available()): ?>
-        <br><b style="color:var(--bad)">The password cannot be stored securely on this
-        server — add <code>secret_key</code> to config.php first (see DEPLOY.md).</b>
-      <?php endif; ?>
-    </p>
-
-    <?php $ms = Mailer::settings(); ?>
-    <form method="post">
-      <?= Csrf::field() ?><input type="hidden" name="action" value="mail">
-      <div class="row" style="align-items:flex-start">
-        <div class="field" style="flex:1 1 220px"><label for="mh">SMTP server</label>
-          <input id="mh" name="host" type="text" value="<?= e($ms['host']) ?>" placeholder="smtp.hostinger.com"></div>
-        <div class="field" style="flex:0 0 110px"><label for="mp">Port</label>
-          <input id="mp" name="port" type="number" min="1" max="65535" value="<?= e((string)$ms['port']) ?>"></div>
-        <div class="field" style="flex:0 0 150px"><label for="msec">Encryption</label>
-          <select id="msec" name="secure">
-            <?php foreach (['ssl' => 'SSL (port 465)', 'tls' => 'STARTTLS (587)', 'none' => 'None'] as $k => $v): ?>
-              <option value="<?= e($k) ?>"<?= $ms['secure'] === (string)$k ? ' selected' : '' ?>><?= e($v) ?></option>
-            <?php endforeach; ?>
-          </select></div>
-      </div>
-      <div class="row" style="align-items:flex-start">
-        <div class="field" style="flex:1 1 240px"><label for="mu">Mailbox address</label>
-          <input id="mu" name="user" type="email" value="<?= e($ms['user']) ?>" placeholder="no-reply@wwwebtech.in"
-                 autocomplete="off"></div>
-        <div class="field" style="flex:1 1 200px"><label for="mpw">Mailbox password</label>
-          <input id="mpw" name="pass" type="password" autocomplete="new-password"
-                 placeholder="<?= $ms['pass'] !== '' ? 'saved — leave blank to keep it' : 'not set yet' ?>">
-          <p class="hint">Stored encrypted. Leave blank to keep the current one.</p></div>
-        <div class="field" style="flex:1 1 200px"><label for="mfn">Sender name</label>
-          <input id="mfn" name="from_name" type="text" value="<?= e($ms['from_name']) ?>"></div>
-      </div>
-      <div class="row" style="align-items:flex-start">
-        <div class="field" style="flex:1 1 240px"><label for="mle">Send enquiries to</label>
-          <input id="mle" name="lead_email" type="email" value="<?= e(Mailer::leadRecipient()) ?>">
-          <p class="hint">Where the contact form lands. Can differ from the sending mailbox.</p></div>
-        <div class="field" style="flex:1 1 200px"><label for="mrp">Reply promise</label>
-          <input id="mrp" name="reply_promise" type="text" maxlength="60"
-                 value="<?= e(Leads::replyPromise()) ?>">
-          <p class="hint">Used in the acknowledgement and on the thank-you page.
-             Keep it identical to what the website says.</p></div>
-        <div class="field field--inline" style="flex:1 1 200px;align-self:center">
-          <input type="checkbox" id="mack" name="lead_ack_enabled" value="1" style="width:auto"
-                 <?= Settings::bool('lead_ack_enabled', true) ? 'checked' : '' ?>>
-          <label for="mack" style="text-transform:none;font-family:var(--font);font-size:13px;letter-spacing:0">
-            Send an acknowledgement to the enquirer</label></div>
-      </div>
-      <div class="row">
-        <button class="btn" type="submit">Save mailbox settings</button>
-        <span class="small <?= Mailer::configured() ? '' : 'muted' ?>">
-          <?php if (Mailer::configured()): ?>
-            <span class="pill pill--ok">ready</span>
-          <?php else: ?>
-            <span class="pill pill--warn">not configured</span> enquiries are still saved, but not emailed
-          <?php endif; ?>
-        </span>
-      </div>
-    </form>
-
-    <?php if (Mailer::configured()): ?>
-    <form method="post" style="margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--rule)">
-      <?= Csrf::field() ?><input type="hidden" name="action" value="mail_test">
-      <button class="btn btn--ghost btn--sm" type="submit">Send me a test email</button>
-      <span class="small muted" style="margin-left:.5rem">Goes to <?= e(Mailer::leadRecipient()) ?>.</span>
-    </form>
-    <?php endif; ?>
-
-    <?php if (!empty($_SESSION['mail_log'])): $ml = $_SESSION['mail_log']; unset($_SESSION['mail_log']); ?>
-      <details style="margin-top:.8rem">
-        <summary class="small" style="cursor:pointer">What the mail server said</summary>
-        <pre class="small" style="white-space:pre-wrap;background:var(--wash);padding:.7rem;
-             border-radius:var(--radius);margin-top:.5rem;overflow-x:auto"><?= e($ml) ?></pre>
-      </details>
-    <?php endif; ?>
+    <h2>Connections</h2>
+    <p class="muted" style="margin:.3rem 0 0">The mailbox, the reply reader, Telegram, WhatsApp, the AI key, PageSpeed and the
+      feed keys are all entered, tested and rotated on one page now —
+      <a href="/admin/?p=connections" style="text-decoration:underline">Connections</a>. Each one has its own
+      step-by-step guide.</p>
   </section>
 
   <section class="card" style="grid-column:1/-1">
@@ -386,9 +226,6 @@ layout_top('Settings', 'settings');
           <input id="fse" name="sender_email" type="email" value="<?= e((string)Settings::get('funnel_sender_email', '')) ?>" placeholder="saurabh@wwwebtech.in">
           <p class="hint">Replies come back to this mailbox with a +lead tag, which is how a reply
             gets attached to the right person and stops their sequence.</p></div>
-        <div class="field" style="flex:1 1 240px"><label for="fpe">Also alert this address</label>
-          <input id="fpe" name="personal_email" type="email" value="<?= e((string)Settings::get('personal_email', '')) ?>" placeholder="you@gmail.com">
-          <p class="hint">A second copy of every new lead, for the phone you actually check.</p></div>
       </div>
       <div class="row" style="gap:.7rem;flex-wrap:wrap;align-items:flex-end">
         <div class="field" style="max-width:150px"><label for="hot">Hot from</label>
@@ -417,91 +254,22 @@ layout_top('Settings', 'settings');
           <?= (int)$dist['total'] === 1 ? 'lead' : 'leads' ?> in the last 90 days — too few to tell you
           anything useful about where these thresholds should sit. Leave them until there are a few more.</p>
       <?php endif; ?>
+      <div class="row" style="gap:.7rem;flex-wrap:wrap;align-items:flex-end">
+        <div class="field field--inline" style="margin:0 0 .6rem">
+          <input type="checkbox" id="ack" name="lead_ack_enabled" value="1" style="width:auto"
+                 <?= Settings::bool('lead_ack_enabled', true) ? 'checked' : '' ?>>
+          <label for="ack" style="text-transform:none;font-family:var(--font);font-size:13px;letter-spacing:0">
+            Send an automatic acknowledgement to each enquiry</label>
+        </div>
+        <div class="field" style="max-width:220px"><label for="rp2">Reply promise in it</label>
+          <input id="rp2" name="reply_promise" maxlength="60" value="<?= e((string)Settings::get('reply_promise', '1 business day')) ?>">
+          <p class="hint">Keep it identical to what the website says.</p></div>
+      </div>
       <div class="field"><label for="cw">Consent wording on the forms</label>
         <textarea id="cw" name="consent_wording" rows="2"><?= e(Leads::consentWording()) ?></textarea>
         <p class="hint">Stored with each lead exactly as it read when they agreed, so changing it here
           never rewrites what someone actually consented to.</p></div>
       <div><button class="btn" type="submit">Save</button></div>
-    </form>
-  </section>
-
-  <section class="card">
-    <h2>Telegram alerts</h2>
-    <p class="muted small" style="margin:.2rem 0 0">Where new leads and approval requests are pushed.
-      Internal only — no customer ever sees it.</p>
-    <form method="post" style="margin-top:.75rem" class="stack">
-      <?= Csrf::field() ?><input type="hidden" name="action" value="telegram">
-      <div class="field"><label for="tgt">Bot token</label>
-        <input id="tgt" name="telegram_token" type="password" autocomplete="off"
-               placeholder="<?= Secrets::get('telegram_token', '') !== '' ? 'saved — leave blank to keep it' : 'from @BotFather' ?>"></div>
-      <div class="field"><label for="tgc">Chat ID</label>
-        <input id="tgc" name="telegram_chat_id" value="<?= e((string)Settings::get('telegram_chat_id', '')) ?>">
-        <p class="hint">Message your bot once from the phone first — Telegram will not let a bot
-          open a conversation, so an unmessaged bot fails with "chat not found".</p></div>
-      <div class="row" style="gap:.4rem"><button class="btn" type="submit">Save</button></div>
-    </form>
-    <form method="post" style="margin-top:.5rem">
-      <?= Csrf::field() ?><input type="hidden" name="action" value="telegram_test">
-      <button class="btn btn--ghost btn--sm" type="submit">Send a test message</button>
-    </form>
-  </section>
-
-  <section class="card">
-    <h2>WhatsApp</h2>
-    <p class="muted small" style="margin:.2rem 0 0">Every template message costs money. The cap is a
-      hard stop, not a warning: at the cap the funnel falls back to email rather than spending more.</p>
-    <form method="post" style="margin-top:.75rem" class="stack">
-      <?= Csrf::field() ?><input type="hidden" name="action" value="whatsapp">
-      <div class="field"><label for="wat">Permanent token</label>
-        <input id="wat" name="wa_token" type="password" autocomplete="off"
-               placeholder="<?= Secrets::get('wa_token', '') !== '' ? 'saved — leave blank to keep it' : 'from Meta' ?>"></div>
-      <div class="field"><label for="wap">Phone number ID</label>
-        <input id="wap" name="wa_phone_id" value="<?= e((string)Settings::get('wa_phone_id', '')) ?>"></div>
-      <div class="row" style="gap:.7rem;flex-wrap:wrap;align-items:flex-end">
-        <div class="field" style="max-width:180px"><label for="wac">Monthly cap (₹)</label>
-          <input id="wac" name="wa_cap" type="number" min="0" max="100000"
-                 value="<?= (int)round(WhatsApp::capPaise() / 100) ?>"></div>
-        <div class="field field--inline" style="margin:0 0 .6rem">
-          <input type="checkbox" id="wae" name="wa_enabled" value="1" style="width:auto"
-                 <?= Settings::bool('wa_enabled', false) ? 'checked' : '' ?>>
-          <label for="wae" style="text-transform:none;font-family:var(--font);font-size:13px;letter-spacing:0">
-            Use WhatsApp for customers</label>
-        </div>
-      </div>
-      <p class="small muted" style="margin:0">Spent this month:
-        <b>₹<?= number_format(WhatsApp::spentPaiseThisMonth() / 100, 2) ?></b>
-        <?= WhatsApp::capReached() ? ' — the cap is reached, so nothing more will send.' : '' ?></p>
-      <div><button class="btn" type="submit">Save</button></div>
-    </form>
-  </section>
-
-  <section class="card" style="grid-column:1/-1">
-    <h2>Reading replies</h2>
-    <?php $why = Inbox::whyNot(); ?>
-    <?php if ($why !== ''): ?>
-      <div class="alert alert--info" style="margin-top:.6rem"><?= e($why) ?></div>
-    <?php endif; ?>
-    <p class="muted small" style="margin:.2rem 0 0;max-width:46rem">The panel checks this mailbox for
-      replies and attaches them to the right lead. A reply is what stops a sequence, so this is the
-      part that keeps the automation polite.</p>
-    <form method="post" style="margin-top:.75rem" class="stack">
-      <?= Csrf::field() ?><input type="hidden" name="action" value="imap">
-      <div class="row" style="gap:.7rem;flex-wrap:wrap">
-        <div class="field" style="flex:1 1 200px"><label for="ih">IMAP host</label>
-          <input id="ih" name="imap_host" value="<?= e(Inbox::host()) ?>" placeholder="imap.hostinger.com"></div>
-        <div class="field" style="max-width:130px"><label for="ipt">Port</label>
-          <input id="ipt" name="imap_port" type="number" min="1" max="65535" value="<?= Inbox::port() ?>"></div>
-        <div class="field" style="flex:1 1 220px"><label for="iu">Mailbox</label>
-          <input id="iu" name="imap_user" type="email" value="<?= e(Inbox::user()) ?>"></div>
-        <div class="field" style="flex:1 1 200px"><label for="ipw">Password</label>
-          <input id="ipw" name="imap_pass" type="password" autocomplete="new-password"
-                 placeholder="<?= Secrets::get('imap_pass', '') !== '' ? 'saved — leave blank to keep it' : '' ?>"></div>
-      </div>
-      <div class="row" style="gap:.4rem"><button class="btn" type="submit">Save</button></div>
-    </form>
-    <form method="post" style="margin-top:.5rem">
-      <?= Csrf::field() ?><input type="hidden" name="action" value="imap_test">
-      <button class="btn btn--ghost btn--sm" type="submit">Check for replies now</button>
     </form>
   </section>
 

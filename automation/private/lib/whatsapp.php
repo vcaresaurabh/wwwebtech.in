@@ -42,6 +42,205 @@ final class WhatsApp
         return self::token() !== '' && self::phoneId() !== '';
     }
 
+    /* ── The six credentials and their friends (Connections card) ─ */
+
+    public static function apiVersion(): string
+    {
+        $v = (string)Settings::get('wa_api_version', '');
+        return preg_match('/^v\d{1,2}\.\d{1,2}$/', $v) ? $v : self::API_VERSION;
+    }
+    public static function wabaId(): string        { return trim((string)Settings::get('wa_waba_id', '')); }
+    public static function appId(): string         { return trim((string)Settings::get('wa_app_id', '')); }
+    public static function appSecret(): string     { return Secrets::get('wa_app_secret', ''); }
+    public static function displayNumber(): string { return trim((string)Settings::get('wa_display_number', '')); }
+    public static function businessStatus(): string
+    {
+        $v = (string)Settings::get('wa_business_status', 'not_started');
+        return in_array($v, ['not_started', 'submitted', 'verified'], true) ? $v : 'not_started';
+    }
+
+    /** Ours to generate; shown to the owner to paste into Meta. */
+    public static function verifyToken(): string
+    {
+        $v = (string)Settings::get('wa_verify_token', '');
+        if ($v === '') { $v = bin2hex(random_bytes(20)); Settings::set('wa_verify_token', $v); }
+        return $v;
+    }
+
+    private static function graph(string $path, array $query = [], string $token = ''): array
+    {
+        $token = $token ?: self::token();
+        $url = 'https://graph.facebook.com/' . self::apiVersion() . '/' . ltrim($path, '/')
+             . ($query ? '?' . http_build_query($query) : '');
+        $r = Http::get($url, ['timeout' => 20, 'headers' => ['authorization: Bearer ' . $token]]);
+        $j = json_decode((string)$r['body'], true);
+        if ($r['status'] === 200 && is_array($j)) return ['ok' => true, 'json' => $j, 'error' => ''];
+        $msg = is_array($j) ? (string)($j['error']['message'] ?? '') : '';
+        $code = is_array($j) ? (string)($j['error']['code'] ?? '') : '';
+        return ['ok' => false, 'json' => [], 'error' => cut(($code !== '' ? '(#' . $code . ') ' : '') . ($msg ?: ($r['error'] ?: 'HTTP ' . $r['status'])), 240)];
+    }
+
+    /** Proves the token and the Phone number ID together. */
+    public static function checkPhone(string $token = ''): array
+    {
+        if (self::phoneId() === '') return ['ok' => false, 'error' => 'No Phone number ID yet.'];
+        $r = self::graph(self::phoneId(), ['fields' => 'display_phone_number,verified_name,quality_rating'], $token);
+        if (!$r['ok']) return $r;
+        $display = (string)($r['json']['display_phone_number'] ?? '');
+        if ($display !== '' && self::displayNumber() === '') Settings::set('wa_display_number', $display);
+        return ['ok' => true, 'error' => '', 'display' => $display,
+                'verified_name' => (string)($r['json']['verified_name'] ?? ''),
+                'quality' => (string)($r['json']['quality_rating'] ?? '')];
+    }
+
+    /** Every template Meta knows about, with status and category. */
+    public static function listTemplates(string $token = ''): array
+    {
+        if (self::wabaId() === '') return ['ok' => false, 'templates' => [], 'error' => 'No WhatsApp Business Account ID yet.'];
+        $r = self::graph(self::wabaId() . '/message_templates', ['fields' => 'name,status,category,language', 'limit' => 100], $token);
+        if (!$r['ok']) return ['ok' => false, 'templates' => [], 'error' => $r['error']];
+        $out = [];
+        foreach ((array)($r['json']['data'] ?? []) as $t) {
+            $out[] = ['name' => (string)($t['name'] ?? ''), 'status' => strtoupper((string)($t['status'] ?? '')),
+                      'category' => strtolower((string)($t['category'] ?? '')), 'language' => (string)($t['language'] ?? 'en')];
+        }
+        return ['ok' => true, 'templates' => $out, 'error' => ''];
+    }
+
+    /**
+     * Pull Meta's template list into the registry, so the owner never has
+     * to read statuses off Meta's UI and the sender can never use a
+     * template Meta has not approved.
+     */
+    public static function syncTemplates(): array
+    {
+        $r = self::listTemplates();
+        if (!$r['ok']) return ['ok' => false, 'count' => 0, 'error' => $r['error']];
+        $n = 0;
+        foreach ($r['templates'] as $t) {
+            if ($t['name'] === '') continue;
+            $approval = match ($t['status']) { 'APPROVED' => 'approved', 'PENDING', 'IN_APPEAL' => 'pending', 'REJECTED', 'PAUSED', 'DISABLED' => 'rejected', default => 'none' };
+            $category = in_array($t['category'], ['utility', 'marketing', 'authentication'], true) ? $t['category'] : 'marketing';
+            $row = DB::one('SELECT id FROM wwt_templates WHERE channel = ? AND (meta_name = ? OR key_name = ?) LIMIT 1', ['whatsapp', $t['name'], $t['name']]);
+            if ($row) {
+                DB::run('UPDATE wwt_templates SET meta_name = ?, category = ?, approval = ?, language = ?, meta_status = ?, synced_at = UTC_TIMESTAMP(), updated_at = UTC_TIMESTAMP() WHERE id = ?',
+                        [$t['name'], $category, $approval, cut($t['language'], 10), cut($t['status'], 30), $row['id']]);
+            } else {
+                DB::run("INSERT INTO wwt_templates (key_name, channel, category, subject, body, is_ai, meta_name, approval, language, meta_status, synced_at, updated_at)
+                         VALUES (?, 'whatsapp', ?, '', '', 0, ?, ?, ?, ?, UTC_TIMESTAMP(), UTC_TIMESTAMP())",
+                        [cut($t['name'], 60), $category, $t['name'], $approval, cut($t['language'], 10), cut($t['status'], 30)]);
+            }
+            $n++;
+        }
+        Settings::set('wa_templates_synced_at', gmdate('Y-m-d H:i:s'));
+        return ['ok' => true, 'count' => $n, 'error' => ''];
+    }
+
+    /** The registry as the card shows it. */
+    public static function templates(): array
+    {
+        return DB::all("SELECT key_name, meta_name, category, approval, language, meta_status, synced_at
+                        FROM wwt_templates WHERE channel = 'whatsapp' ORDER BY approval = 'approved' DESC, meta_name");
+    }
+
+    /**
+     * Send the first approved utility template (or Meta's sample
+     * hello_world) to a number the owner typed — the card's optional
+     * third sub-check.
+     */
+    public static function sendTestTemplate(string $to): array
+    {
+        $to = self::e164($to);
+        if ($to === '') return ['ok' => false, 'error' => 'That does not look like a phone number.'];
+        $t = DB::one("SELECT meta_name, language FROM wwt_templates WHERE channel = 'whatsapp' AND approval = 'approved'
+                      AND category = 'utility' AND synced_at IS NOT NULL ORDER BY meta_name = 'hello_world' DESC, meta_name LIMIT 1");
+        if (!$t) return ['ok' => false, 'error' => 'No approved utility template has been synced yet — press Sync from Meta first.'];
+        $payload = ['messaging_product' => 'whatsapp', 'to' => $to, 'type' => 'template',
+                    'template' => ['name' => (string)$t['meta_name'], 'language' => ['code' => (string)($t['language'] ?: 'en_US')]]];
+        if ((string)$t['meta_name'] !== 'hello_world') {
+            $payload['template']['components'] = [['type' => 'body', 'parameters' => [['type' => 'text', 'text' => 'there']]]];
+        }
+        $r = self::post('https://graph.facebook.com/' . self::apiVersion() . '/' . self::phoneId() . '/messages', $payload);
+        if (!$r['ok']) return $r;
+        Connections::touch('whatsapp');
+        return ['ok' => true, 'error' => '', 'provider_id' => (string)($r['json']['messages'][0]['id'] ?? ''),
+                'cost_paise' => self::UTILITY_PAISE];
+    }
+
+    /* ── Inbound (the webhook) ─────────────────────────────── */
+
+    /** Meta signs every POST with the App Secret. No secret, no webhook. */
+    public static function verifySignature(string $rawBody, string $header): bool
+    {
+        $secret = self::appSecret();
+        if ($secret === '' || $header === '' || !str_starts_with($header, 'sha256=')) return false;
+        $expected = 'sha256=' . hash_hmac('sha256', $rawBody, $secret);
+        return hash_equals($expected, $header);
+    }
+
+    /**
+     * A customer's message lands on their thread and stops their sequence,
+     * exactly as an email reply does. Receipts update delivery status.
+     *
+     * @return array{messages:int, statuses:int, stopped:int, unknown:int}
+     */
+    public static function handleInbound(array $payload): array
+    {
+        $out = ['messages' => 0, 'statuses' => 0, 'stopped' => 0, 'unknown' => 0];
+        foreach ((array)($payload['entry'] ?? []) as $entry) {
+            foreach ((array)($entry['changes'] ?? []) as $change) {
+                $v = (array)($change['value'] ?? []);
+                foreach ((array)($v['messages'] ?? []) as $m) {
+                    $from = preg_replace('/\D/', '', (string)($m['from'] ?? '')) ?? '';
+                    $mid  = (string)($m['id'] ?? '');
+                    if ($from === '' || $mid === '') continue;
+                    if (DB::val('SELECT 1 FROM wwt_messages WHERE provider_id = ? LIMIT 1', [$mid]) !== null) continue;
+                    $body = match ((string)($m['type'] ?? '')) {
+                        'text'     => (string)($m['text']['body'] ?? ''),
+                        'button'   => (string)($m['button']['text'] ?? ''),
+                        'interactive' => (string)($m['interactive']['button_reply']['title'] ?? $m['interactive']['list_reply']['title'] ?? ''),
+                        default    => '[' . (string)($m['type'] ?? 'message') . ']',
+                    };
+                    $leadId = self::leadByPhone($from);
+                    if ($leadId === 0) { $out['unknown']++; wwt_log('whatsapp', 'inbound from unknown number', ['digits' => substr($from, -4)]); continue; }
+                    DB::insert("INSERT INTO wwt_messages (lead_id, ts, direction, channel, subject, body, provider_id, status)
+                                VALUES (?, UTC_TIMESTAMP(), 'in', 'whatsapp', '', ?, ?, 'received')",
+                               [$leadId, cut($body, 20000), cut($mid, 190)]);
+                    Timeline::add($leadId, 'reply_received', 'whatsapp', cut($body, 200), 'them');
+                    Score::apply($leadId);
+                    if (preg_match('/^\s*(stop|unsubscribe|remove me|opt out)\b/i', $body)) {
+                        Funnel::optOut($leadId, 'replied "stop" on WhatsApp'); $out['stopped']++;
+                    } elseif (Funnel::checkStop($leadId) !== '') {
+                        $out['stopped']++;
+                    }
+                    $out['messages']++;
+                    Connections::touch('whatsapp');
+                }
+                foreach ((array)($v['statuses'] ?? []) as $st) {
+                    $mid = (string)($st['id'] ?? ''); $s = (string)($st['status'] ?? '');
+                    if ($mid === '') continue;
+                    if ($s === 'failed') {
+                        $why = (string)($st['errors'][0]['title'] ?? $st['errors'][0]['message'] ?? 'delivery failed');
+                        DB::run("UPDATE wwt_messages SET status = 'failed', error = ? WHERE provider_id = ? AND direction = 'out'", [cut($why, 240), $mid]);
+                    }
+                    $out['statuses']++;
+                }
+            }
+        }
+        return $out;
+    }
+
+    /** The lead whose phone ends in these digits — newest first. */
+    private static function leadByPhone(string $digits): int
+    {
+        $last = substr($digits, -10);
+        if (strlen($last) < 8) return 0;
+        $id = DB::val("SELECT id FROM wwt_leads
+                       WHERE REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(phone, ' ', ''), '-', ''), '+', ''), '(', ''), ')', '') LIKE ?
+                       ORDER BY id DESC LIMIT 1", ['%' . $last]);
+        return (int)($id ?? 0);
+    }
+
     public static function enabled(): bool
     {
         return self::configured() && Settings::bool('wa_enabled', false);
@@ -138,7 +337,7 @@ final class WhatsApp
             ],
         ];
 
-        $url = 'https://graph.facebook.com/' . self::API_VERSION . '/' . self::phoneId() . '/messages';
+        $url = 'https://graph.facebook.com/' . self::apiVersion() . '/' . self::phoneId() . '/messages';
         $r = self::post($url, $payload);
         if (!$r['ok']) return $r;
 
@@ -161,7 +360,7 @@ final class WhatsApp
         $to = self::e164((string)$l['phone']);
         if ($to === '') return ['ok' => false, 'error' => 'no usable phone number'];
 
-        $r = self::post('https://graph.facebook.com/' . self::API_VERSION . '/' . self::phoneId() . '/messages', [
+        $r = self::post('https://graph.facebook.com/' . self::apiVersion() . '/' . self::phoneId() . '/messages', [
             'messaging_product' => 'whatsapp',
             'to' => $to, 'type' => 'text',
             'text' => ['body' => cut($text, 4000), 'preview_url' => false],

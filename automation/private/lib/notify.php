@@ -30,12 +30,21 @@ final class Notify
             return ['ok' => true, 'skipped' => 'partial lead — not notified by design'];
         }
 
+        /* Every recipient decides what it receives. "Every lead" gets
+           each enquiry; "hot leads only" gets just the ones worth
+           interrupting someone for. Each address is its own attempt, so
+           one bouncing address cannot stop the others. */
+        $channels = [];
+        foreach (self::recipients() as $r) {
+            $wants = in_array('every_lead', $r['roles'], true)
+                  || (in_array('hot_only', $r['roles'], true) && (string)$l['band'] === 'hot');
+            if (!$wants) continue;
+            $channels['email:' . $r['email']] = static fn() => self::email($l, $r['email']);
+        }
+        $channels['telegram'] = static fn() => Telegram::newLead($l);
+
         $out = [];
-        foreach ([
-            'company'  => static fn() => self::email($l, Mailer::leadRecipient()),
-            'personal' => static fn() => self::personalEmail($l),
-            'telegram' => static fn() => Telegram::newLead($l),
-        ] as $channel => $fn) {
+        foreach ($channels as $channel => $fn) {
             try {
                 $r = $fn();
                 $out[$channel] = $r;
@@ -52,15 +61,100 @@ final class Notify
         return ['ok' => true, 'channels' => $out];
     }
 
-    /** The second copy, to the owner's own inbox. Optional and settable. */
-    private static function personalEmail(array $l): array
+    /* ── Recipients (Connections card) ─────────────────────── */
+
+    public const ROLES = ['every_lead' => 'Every lead', 'hot_only' => 'Hot leads only',
+                          'digest' => 'Daily digest', 'errors' => 'System errors'];
+
+    /**
+     * Who is told what. Seeded from the two addresses that existed before
+     * the list did, so the first render of the card is already true.
+     *
+     * @return list<array{id:string,email:string,label:string,roles:list<string>}>
+     */
+    public static function recipients(): array
     {
-        $to = trim((string)Settings::get('personal_email', (string)cfg('site.personal_email', '')));
-        if ($to === '') return ['ok' => true, 'skipped' => 'no personal address set'];
-        if (strcasecmp($to, Mailer::leadRecipient()) === 0) {
-            return ['ok' => true, 'skipped' => 'same as the company address'];
+        $list = Settings::json('alert_recipients', []);
+        $out = [];
+        foreach ($list as $r) {
+            if (!is_array($r) || !filter_var((string)($r['email'] ?? ''), FILTER_VALIDATE_EMAIL)) continue;
+            $out[] = ['id' => (string)($r['id'] ?? substr(md5((string)$r['email']), 0, 8)),
+                      'email' => strtolower(trim((string)$r['email'])), 'label' => cut((string)($r['label'] ?? ''), 60),
+                      'roles' => array_values(array_intersect((array)($r['roles'] ?? []), array_keys(self::ROLES)))];
         }
-        return self::email($l, $to);
+        if (!$out) {
+            $seed = [];
+            $company = Mailer::leadRecipient();
+            if ($company !== '') $seed[] = ['id' => 'company', 'email' => $company, 'label' => 'Company mailbox', 'roles' => ['every_lead', 'digest', 'errors']];
+            $personal = trim((string)Settings::get('personal_email', (string)cfg('site.personal_email', '')));
+            if ($personal !== '' && strcasecmp($personal, $company) !== 0) {
+                $seed[] = ['id' => 'personal', 'email' => strtolower($personal), 'label' => 'Personal', 'roles' => ['every_lead', 'digest']];
+            }
+            return $seed;
+        }
+        return $out;
+    }
+
+    public static function saveRecipients(array $list): void
+    {
+        Settings::set('alert_recipients', json_encode(array_values($list), JSON_UNESCAPED_UNICODE) ?: '[]');
+        /* Legacy keys keep pointing at something sensible. */
+        $every = array_values(array_filter($list, static fn($r) => in_array('every_lead', (array)($r['roles'] ?? []), true)));
+        if ($every) {
+            Settings::set('lead_email', (string)$every[0]['email']);
+            Settings::set('personal_email', (string)($every[1]['email'] ?? ''));
+        }
+    }
+
+    public static function testRecipient(string $to): array
+    {
+        return Mailer::send(['to' => $to, 'subject' => 'Test from the Wwwebtech panel',
+            'text' => "This address receives alerts from the Wwwebtech panel.\n\nSent " . local_time(gmdate('Y-m-d H:i:s')) . " IST\n"]);
+    }
+
+    /**
+     * Something broke. Tell the owner on every channel that still works.
+     * $broken names the channel that is known to be down, so the alert
+     * about email failing is not sent by email.
+     */
+    public static function systemAlert(string $subject, string $text, string $broken = ''): array
+    {
+        $out = [];
+        if ($broken !== 'telegram') {
+            $r = Telegram::sendTo('all', '⚠️ <b>' . Telegram::esc($subject) . '</b>' . "\n\n" . Telegram::esc(cut($text, 1500)));
+            $out['telegram'] = $r['ok'];
+        }
+        if ($broken !== 'mail') {
+            foreach (self::recipients() as $r) {
+                if (!in_array('errors', $r['roles'], true)) continue;
+                $x = Mailer::send(['to' => $r['email'], 'subject' => '[Wwwebtech] ' . $subject, 'text' => $text]);
+                $out['email:' . $r['email']] = $x['ok'];
+            }
+        }
+        wwt_log('notify', 'system alert', ['subject' => $subject, 'channels' => $out]);
+        return $out;
+    }
+
+    /** One email each morning to whoever asked for it. */
+    public static function digest(): string
+    {
+        $to = array_values(array_filter(self::recipients(), static fn($r) => in_array('digest', $r['roles'], true)));
+        if (!$to) return 'nobody asked for a digest';
+        $leads = (int)DB::val("SELECT COUNT(*) FROM wwt_leads WHERE is_test = 0 AND is_partial = 0 AND ts >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 1 DAY)", [], 0);
+        $hot   = (int)DB::val("SELECT COUNT(*) FROM wwt_leads WHERE is_test = 0 AND is_partial = 0 AND band = 'hot' AND ts >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 1 DAY)", [], 0);
+        $new   = (int)DB::val("SELECT COUNT(*) FROM wwt_leads WHERE status = 'new' AND is_test = 0", [], 0);
+        $sent  = (int)DB::val("SELECT COUNT(*) FROM wwt_messages WHERE direction = 'out' AND status = 'sent' AND ts >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 1 DAY)", [], 0);
+        $repl  = (int)DB::val("SELECT COUNT(*) FROM wwt_messages WHERE direction = 'in' AND ts >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 1 DAY)", [], 0);
+        $wait  = (int)DB::val("SELECT COUNT(*) FROM wwt_messages WHERE status = 'pending_review'", [], 0);
+        $conn  = Connections::summary();
+        $site  = rtrim((string)cfg('site.url', ''), '/');
+        $text  = "Yesterday at " . (string)cfg('site.url', 'wwwebtech.in') . "\n\n"
+               . "Leads: $leads ($hot hot)\nWaiting for a reply from you: $new\n"
+               . "Follow-ups sent: $sent · Replies received: $repl · Awaiting your approval: $wait\n\n"
+               . "Connections: " . $conn['line'] . "\n\nPanel: $site/admin/\n";
+        $n = 0;
+        foreach ($to as $r) { $x = Mailer::send(['to' => $r['email'], 'subject' => 'Wwwebtech daily: ' . $leads . ' lead' . ($leads === 1 ? '' : 's') . ($new ? ", $new waiting" : ''), 'text' => $text]); if ($x['ok']) $n++; }
+        return "sent to $n of " . count($to);
     }
 
     /**

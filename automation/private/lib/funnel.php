@@ -526,7 +526,7 @@ final class FunnelRunner
     {
         if (!Settings::bool('funnel_review_ping', true)) return;
         $site = rtrim((string)cfg('site.url', ''), '/');
-        Telegram::send(
+        Telegram::sendTo('approvals',
             '✍️ <b>A reply is waiting for your approval</b>' . "\n\n"
             . Telegram::esc((string)$l['name']) . ' — ' . Telegram::esc((string)$l['service']),
             ['buttons' => [['Review it', $site . '/admin/?p=funnel']]]);

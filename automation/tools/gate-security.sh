@@ -45,6 +45,18 @@ dbout=$($PHP tools/dbcheck.php 2>&1)
 if [ $? -eq 0 ]; then ok "the database layer survives an idle timeout"
 else no "database resilience" "$(grep FAIL <<<"$dbout" | head -2)"; fi
 
+echo; echo "── 1b. Secrets never reach a browser or a log ─────────"
+# A stored secret may be masked, tested or compared — never printed.
+leak=$(grep -rnE '<\?=\s*(e\()?\s*Secrets::get\(' webroot --include='*.php' 2>/dev/null || true)
+[ -z "$leak" ] && ok "no admin page echoes Secrets::get()" || no "secret echoed" "$(printf '%s' "$leak" | head -2)"
+# $key alone is a template or setting name all over the codebase; the
+# variables that hold credentials are named for what they are.
+logleak=$(grep -rnE "wwt_log\([^)]*\\\$(token|tok|pass|password|secret|apiKey|appSecret)\b" private/lib webroot --include='*.php' 2>/dev/null || true)
+[ -z "$logleak" ] && ok "no log line is handed a token, password or key" || no "secret logged" "$(printf '%s' "$logleak" | head -2)"
+chk "webhook signatures are compared in constant time" "$(grep -c 'hash_equals' private/lib/whatsapp.php)" "1"
+chk "the verify token is compared in constant time" "$(grep -c 'hash_equals' webroot/api/whatsapp-webhook.php)" "1"
+has "$(cat private/lib/connections.php)" "maskLast4" && ok "hints use the last-four mask, not the value" || no "mask" "hint does not mask"
+
 echo; echo "── 2. Output escaping ─────────────────────────────────"
 # Every dynamic value in a template goes through e(). Find raw echoes.
 # Only flag lines that PRINT an array value. A line that merely compares one

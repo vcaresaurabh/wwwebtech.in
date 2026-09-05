@@ -72,6 +72,11 @@ $tasks = DB::all("SELECT * FROM wwt_task_runs ORDER BY task");
 /* The things worth interrupting someone for, gathered in one place so the
    dashboard leads with them instead of burying them in a table. */
 $alerts = [];
+$conn = Connections::summary();
+if ($conn['errors']) {
+    $alerts[] = ['bad', '<b>' . e(implode(', ', $conn['errors'])) . '</b> ' . (count($conn['errors']) === 1 ? 'has' : 'have')
+                        . ' stopped working — <a href="/admin/?p=connections" style="text-decoration:underline">open Connections</a>.'];
+}
 foreach (Task::stalled() as $t) {
     $alerts[] = ['bad', 'The job <b>' . e($t['task']) . '</b> started ' . e(local_time($t['last_start']))
         . ' and never finished. It may be stuck.'];
@@ -127,6 +132,8 @@ $recent= DB::all("SELECT * FROM wwt_leads ORDER BY ts DESC LIMIT 5");
     <div class="kpi__d <?= $leadsNew > 0 ? 'down' : 'flat' ?>"><?= $leadsNew > 0 ? 'waiting on a reply' : 'all handled' ?></div></div>
   <div class="kpi"><div class="kpi__k">Visitors · 7d</div><div class="kpi__v"><?= number_format($vis7) ?></div>
     <div class="kpi__d flat"><?= number_format($views7) ?> pageviews</div></div>
+  <div class="kpi"><div class="kpi__k">Connections</div><div class="kpi__v"><?= (int)$conn['connected'] ?><span class="muted" style="font-size:.6em">/<?= (int)$conn['total'] ?></span></div>
+    <div class="kpi__d <?= $conn['errors'] ? 'down' : 'flat' ?>"><a href="/admin/?p=connections" style="text-decoration:underline"><?= e($conn['errors'] ? implode(', ', $conn['errors']) . ' failing' : ($conn['unconfigured'] ? count($conn['unconfigured']) . ' not configured' : 'all connected')) ?></a></div></div>
   <div class="kpi"><div class="kpi__k">Posts live</div><div class="kpi__v"><?= $posts ?></div>
     <div class="kpi__d <?= $topicsLeft < 14 ? 'down' : 'flat' ?>"><?= $topicsLeft ?> topics queued</div></div>
 </div>

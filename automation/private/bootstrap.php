@@ -75,6 +75,7 @@ require_once __DIR__ . '/lib/seo.php';
 require_once __DIR__ . '/lib/tags.php';
 require_once __DIR__ . '/lib/task.php';
 require_once __DIR__ . '/lib/inbox.php';
+require_once __DIR__ . '/lib/connections.php';
 require_once __DIR__ . '/lib/audit-tool.php';
 require_once __DIR__ . '/lib/jobs.php';
 

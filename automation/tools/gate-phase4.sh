@@ -197,11 +197,16 @@ chk "blog page renders" "$(tail -1 <<<"$bp")" "200"
 has "$bp" "Something went wrong" && no "blog page clean" "threw mid-render" || ok "blog page renders without error"
 has "$bp" "Automatic publishing is" && ok "the kill switch is the first control" || no "kill switch" "not on the page"
 has "$bp" "No Anthropic API key is set" && ok "says plainly when no key is set" || no "key warning" "missing"
-has "$bp" "sk-ant-" && ok "the key field is present" || no "key field" "missing"
+# The key moved to the Connections hub; the Blog page points there.
+has "$bp" "?p=connections" && ok "the blog page points at Connections for the key" || no "key pointer" "missing"
+cp=$(curl -s -b "$JAR" "$BASE/admin/?p=connections")
+has "$cp" "Claude (Anthropic)" && ok "the Connections page has the Claude card" || no "claude card" "missing"
 # A stored key must never be echoed back into the page.
 $PHP -r 'require "private/bootstrap.php"; Secrets::put("anthropic_key","sk-ant-secret-value-abc123");' 
-chk "a saved key is never rendered" \
+chk "a saved key is never rendered on the blog page" \
   "$(curl -s -b "$JAR" "$BASE/admin/?p=blog" | grep -c 'sk-ant-secret-value-abc123')" "0"
+chk "nor on the Connections page" \
+  "$(curl -s -b "$JAR" "$BASE/admin/?p=connections" | grep -c 'sk-ant-secret-value-abc123')" "0"
 $PHP -r 'require "private/bootstrap.php"; Secrets::put("anthropic_key","");'
 
 # Sign the viewer in here rather than relying on a jar another gate left

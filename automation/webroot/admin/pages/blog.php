@@ -41,23 +41,10 @@ if ($action !== '') {
                 if ($cap < 0 || $cap > 500) throw new InvalidArgumentException('Set a cap between 0 and 500.');
                 Settings::set('blog_monthly_cap_usd', (string)$cap);
 
-                $key = (string)($_POST['anthropic_key'] ?? '');
-                if ($key !== '') {
-                    if (!str_starts_with($key, 'sk-ant-')) {
-                        throw new InvalidArgumentException('That does not look like an Anthropic key (they start sk-ant-).');
-                    }
-                    Secrets::put('anthropic_key', $key);
-                }
                 audit('blog_settings', 'model=' . $m, Auth::email());
                 redirect('/admin/?p=blog', 'ok', 'Saved.');
             }
 
-            case 'test_key': {
-                $r = Claude::testKey();
-                audit('blog_key_test', $r['ok'] ? 'ok' : $r['error'], Auth::email());
-                redirect('/admin/?p=blog', $r['ok'] ? 'ok' : 'bad',
-                    $r['ok'] ? 'The key works — ' . $r['detail'] : 'The key did not work: ' . $r['error']);
-            }
 
             case 'generate': {
                 $publish = isset($_POST['publish_now']);
@@ -257,21 +244,9 @@ layout_top('Blog', 'blog');
                  value="<?= e((string)$cap) ?>">
           <p class="hint">Nothing is sent once this is reached.</p></div>
       </div>
-      <div class="field">
-        <label for="bk">Anthropic API key</label>
-        <input id="bk" name="anthropic_key" type="password" autocomplete="off"
-               placeholder="<?= $keySet ? 'saved — leave blank to keep it' : 'sk-ant-…' ?>">
-        <p class="hint">Stored encrypted. Never shown again after saving.</p>
-      </div>
+      <p class="small muted">The Anthropic key lives on <a href="/admin/?p=connections#c-claude" style="text-decoration:underline">Connections</a>, with a test button and a spend meter.</p>
       <button class="btn" type="submit">Save</button>
     </form>
-    <?php if ($keySet): ?>
-    <form method="post" style="margin-top:.7rem;padding-top:.7rem;border-top:1px solid var(--rule)">
-      <?= Csrf::field() ?><input type="hidden" name="action" value="test_key">
-      <button class="btn btn--ghost btn--sm" type="submit">Check the key works</button>
-      <span class="small muted" style="margin-left:.4rem">Costs a fraction of a cent.</span>
-    </form>
-    <?php endif; ?>
   </section>
 
   <section class="card">

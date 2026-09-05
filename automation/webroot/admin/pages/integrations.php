@@ -56,17 +56,6 @@ if ($action !== '') {
                 $v = Tags::verify();
                 redirect('/admin/?p=integrations', $v['ok'] ? 'ok' : 'warn', $v['detail']);
             }
-            case 'conv_key': {
-                /* A fresh key immediately invalidates the old one, which is
-                   the point — but it also breaks whatever schedule is using
-                   it, so the page says so before and after. */
-                $key = bin2hex(random_bytes(24));
-                Secrets::put('conversions_key', $key);
-                audit('ads_key_rotate', '', Auth::email());
-                redirect('/admin/?p=integrations', 'warn',
-                    'New key generated. Update the scheduled fetch in Google and Microsoft — '
-                  . 'the old URLs stopped working just now.');
-            }
         }
     } catch (Throwable $t) {
         redirect('/admin/?p=integrations', 'bad', $t->getMessage());
@@ -243,7 +232,7 @@ $adsSum  = Ads::summary();
   <?php endif; ?>
 
   <?php if ($convKey === ''): ?>
-    <p class="small" style="margin-top:.8rem">No key yet. Generate one to get the URLs.</p>
+    <p class="small" style="margin-top:.8rem">No key yet. Generate one on <a href="/admin/?p=connections#c-keys" style="text-decoration:underline">Connections</a> to get the URLs.</p>
   <?php else: ?>
     <p class="mono small" style="margin:.8rem 0 .3rem">Give these to the platform's scheduled import</p>
     <?php foreach ([
@@ -262,11 +251,6 @@ $adsSum  = Ads::summary();
       yourself; with it, the rows are marked as sent and will not appear in the next fetch.</p>
   <?php endif; ?>
 
-  <form method="post" style="margin-top:.7rem"
-        <?= $convKey !== '' ? 'onsubmit="return confirm(\'This stops the current URLs working immediately. Continue?\')"' : '' ?>>
-    <?= Csrf::field() ?><input type="hidden" name="action" value="conv_key">
-    <button class="btn btn--<?= $convKey === '' ? '' : 'ghost btn--sm' ?>" type="submit">
-      <?= $convKey === '' ? 'Generate a key' : 'Generate a new key' ?></button>
-  </form>
+  <p class="small muted" style="margin-top:.7rem">The key is generated and rotated on <a href="/admin/?p=connections#c-keys" style="text-decoration:underline">Connections → Feed &amp; test keys</a>.</p>
 </section>
 <?php layout_bottom();

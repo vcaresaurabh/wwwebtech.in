@@ -22,6 +22,7 @@ const WWT_NAV = [
     ['blog',         'Blog',         'M6 3.5h8l4 4v13H6z M14 3.5v4h4 M9 12.5h6 M9 16h4'],
     ['seo',          'SEO health',   'M11 4.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13z M16 16l4 4'],
     ['integrations', 'Integrations', 'M9 4.5v5 M15 4.5v5 M6.5 9.5h11v4a5.5 5.5 0 0 1-11 0z M12 19v2'],
+    ['connections',  'Connections',  'M8 12h8 M5 12a3 3 0 1 0 0-.01 M19 12a3 3 0 1 0 0-.01 M12 5v4 M12 15v4'],
     ['settings',     'Settings',     'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1 2 2 0 1 1-4 0 1.6 1.6 0 0 0-2.7-1.1l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.6 1.6 0 0 0 3.5 15a2 2 0 1 1 0-4 1.6 1.6 0 0 0 1.1-2.7l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.6 1.6 0 0 0 10 4.5a2 2 0 1 1 4 0 1.6 1.6 0 0 0 2.7 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0 1.1 2.7 2 2 0 1 1 0 4z'],
 ];
 
@@ -51,7 +52,9 @@ function layout_top(string $title, string $active = ''): void
       <?php foreach (WWT_NAV as [$slug, $label, $d]):
             // Viewers get read-only sections only.
             if (!Auth::isAdmin() && in_array($slug, ['integrations', 'settings', 'blog'], true)) continue; ?>
-      <a href="/admin/?p=<?= e($slug) ?>"<?= $active === $slug ? ' aria-current="page"' : '' ?>>
+      <a href="/admin/?p=<?= e($slug) ?>"<?= $active === $slug ? ' aria-current="page"' : '' ?><?php
+          /* The one nav item that can demand attention: a connection in Error. */
+          if ($slug === 'connections' && Settings::bool('conn_attention', false)) echo ' class="side__attn" title="A connection needs attention"'; ?>>
         <svg class="ic" viewBox="0 0 24 24"><path d="<?= e($d) ?>"/></svg> <?= e($label) ?></a>
       <?php endforeach; ?>
     </nav>

@@ -62,7 +62,7 @@ if (!function_exists('gets')) {
     }
 }
 
-$__pages = ['dashboard', 'leads', 'analytics', 'conversations', 'funnel', 'landing', 'audits', 'blog', 'seo', 'integrations', 'settings'];
+$__pages = ['dashboard', 'leads', 'analytics', 'conversations', 'funnel', 'landing', 'audits', 'connections', 'blog', 'seo', 'integrations', 'settings'];
 $__bad   = 0;
 $__total = count($__pages);
 

@@ -1,6 +1,6 @@
 # QA report — wwwebtech.in
 
-Generated 2026-09-04 01:42 UTC · **36/36 checks pass**.
+Generated 2026-09-05 01:46 UTC · **36/36 checks pass**.
 
 Re-run with `node tools/qa.mjs`. Every row below is an acceptance criterion
 from the build brief, not a vanity metric.
@@ -20,7 +20,7 @@ from the build brief, not a vanity metric.
 
 | | Check | Detail |
 |---|---|---|
-| ✅ | LCP < 2.0s (throttled 4G / 4× CPU) | 0.64s |
+| ✅ | LCP < 2.0s (throttled 4G / 4× CPU) | 0.74s |
 | ✅ | LCP element is hero text, not an image | H1 |
 | ✅ | CLS < 0.05 | 0.0000 |
 

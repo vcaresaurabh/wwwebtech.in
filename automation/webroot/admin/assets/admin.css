@@ -231,3 +231,40 @@ tbody td{white-space:normal}
   .tablewrap table{min-width:46rem}
 }
 @media print{.side,.top,.filters,.pager{display:none}.shell{grid-template-columns:1fr}}
+
+/* ── Connections ────────────────────────────────────────
+   One card per connection, same anatomy on every card: a status pill
+   that means one of four things, a numbered guide that folds away, the
+   fields, and a result panel that lists every sub-check. */
+.pill--off{background:var(--wash);color:var(--ink-3);border-color:var(--rule)}
+.conn{scroll-margin-top:1rem}
+.conn__head{display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap;margin-bottom:.35rem}
+.conn__head h2{margin:0}
+.conn__when{font-family:var(--mono);font-size:11px;color:var(--ink-3);margin-left:auto}
+.conn__blurb{color:var(--ink-2);font-size:13.5px;margin:0 0 .8rem;max-width:68ch}
+.conn details{border:1px solid var(--rule);border-radius:var(--radius);background:var(--wash);margin:.6rem 0 .9rem}
+.conn summary{cursor:pointer;padding:.55rem .8rem;font-weight:600;font-size:13px;list-style:none;display:flex;gap:.5rem;align-items:center}
+.conn summary::-webkit-details-marker{display:none}
+.conn summary::before{content:"▸";color:var(--ink-3);font-size:11px}
+.conn details[open] summary::before{content:"▾"}
+.conn .guide{margin:0;padding:.2rem 1.1rem .8rem 2rem;font-size:13px}
+.conn .guide li{margin:.45rem 0;line-height:1.55}
+.conn .guide li:target,.conn .guide li.is-hint{background:var(--marigold-wash);outline:2px solid var(--marigold);outline-offset:3px;border-radius:2px}
+.conn .guide code{background:var(--card);padding:.05em .3em;border-radius:2px}
+.checks{list-style:none;margin:.5rem 0 0;padding:0;display:grid;gap:.3rem;font-size:13px}
+.checks li{display:flex;gap:.55rem;align-items:baseline}
+.checks li::before{content:"✓";font-weight:700;color:var(--ok);flex:0 0 1em}
+.checks li.no::before{content:"✗";color:var(--bad)}
+.checks .why{color:var(--ink-3)}
+.secret{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;font-size:13px}
+.secret code{font-family:var(--mono);letter-spacing:.06em}
+.secret .muted{font-size:12px}
+.dns{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:var(--radius);overflow:hidden;margin:0 0 .9rem}
+.dns>div{background:var(--card);padding:.55rem .8rem;font-size:12.5px}
+.dns b{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3)}
+.dns .fix{color:var(--ink-2);margin-top:.25rem;word-break:break-word}
+.meter{height:6px;background:var(--wash);border:1px solid var(--rule);border-radius:3px;overflow:hidden;margin:.3rem 0}
+.meter i{display:block;height:100%;background:var(--marigold)}
+.meter i.full{background:var(--bad)}
+.copy{font-family:var(--mono);font-size:12px;background:var(--wash);border:1px solid var(--rule);padding:.4rem .6rem;border-radius:var(--radius);word-break:break-all;user-select:all}
+.side__attn::after{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--bad);margin-left:.45rem;vertical-align:middle}

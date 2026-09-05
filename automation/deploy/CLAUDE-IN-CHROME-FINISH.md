@@ -73,13 +73,15 @@ TASK 2 — Sender identity and alerts (admin panel)
 ────────────────────────────────────────────────────────────
 
 Go to **https://wwwebtech.in/admin/** and sign in. (Ask me if you need the
-password.) Then open **Settings**.
+password.) Then open **Connections** — every credential is on that one page,
+each with its own numbered guide. The older Settings sections named below
+have moved there; follow the card with the same name.
 
-First, scroll to the **Mailbox** section and read the address in the field
-labelled **"Mailbox address"**. You will need it in a moment. Tell me what it
-is. Do not change anything in that section yet.
+First, on **Connections** → **Email — sending**, read the mailbox address
+shown on the card. You will need it in a moment. Tell me what it is. Do not
+change anything there yet.
 
-Now find the section headed **Follow-up and scoring** and fill in:
+Now open **Settings** → the section **Follow-up and scoring** and fill in:
 
 - **Messages are signed:** `Saurabh`
 - **and sent from:** the exact mailbox address you just read from the Mailbox
@@ -89,10 +91,12 @@ Now find the section headed **Follow-up and scoring** and fill in:
 - Leave the consent wording exactly as it is. Do not reword it — it is a
   legal record of what people agreed to.
 
-Click **Save**.
+Click **Save**. Then on **Connections** → **Alert recipients**, add
+`wwwebtech.in@gmail.com` with *Every lead* and *Daily digest* ticked, and press
+**Send test** next to it.
 
-**Verify:** a green "Saved." appears, and reloading the page shows your three
-values still filled in. Also read back to me the line just below the
+**Verify:** a green "Saved." appears on Settings, the recipient shows on the
+Connections card, and the test email arrives. Also read back to me the line just below the
 thresholds about the last 90 days of leads — it will either give a hot/warm/
 cold split, or say there are too few leads to judge. Tell me which.
 
@@ -103,21 +107,17 @@ TASK 3 — Let the panel read replies (admin panel)
 Why: this is what stops the automation when a customer answers. It matters
 more than anything else on this list.
 
-Still in **Settings**, find the section headed **Reading replies**:
+On **Connections**, find the card **Email — reading replies**:
 
-- **IMAP host:** `imap.hostinger.com`
-- **Port:** `993`
+- **Provider:** Hostinger (the server, port and encryption fill in)
 - **Mailbox:** the same address you used in Task 2
 - **Password:** the password for that mailbox. Ask me for it.
 
-Click **Save**, then click **Check for replies now**.
+Click **Save**, then **Check the mailbox**.
 
-**Verify:** the message at the top should read something like
-"Checked the mailbox: 0 new · 0 matched to a lead…". Any sentence starting
-"could not connect" is a failure — tell me the exact wording and stop.
-
-Note: the page may show a blue notice about IMAP before you save. That is
-expected and it goes away once the mailbox is configured.
+**Verify:** the card shows **Connected** and the result panel lists the unread
+count and the three most recent subjects. If it shows **Error**, read the
+sentence under it — it says what to do — and tell me the exact wording.
 
 ────────────────────────────────────────────────────────────
 TASK 4 — Telegram alerts (free, optional)
@@ -132,21 +132,17 @@ Telegram account or enter a phone number.
    username, use something ending in `bot`, e.g. `wwwebtech_alerts_bot`. If
    that name is taken, add digits until one is accepted.
 3. BotFather replies with a token that looks like `1234567890:AAxxxxx…`.
-   Keep it — you will paste it in a moment. Do not post it anywhere else.
-4. **Open a chat with your new bot and send it any message, e.g. "hello".**
-   This step is not optional. Telegram does not let a bot start a
-   conversation, so an unmessaged bot fails later with "chat not found".
-5. In a new tab open:
-   `https://api.telegram.org/bot<TOKEN>/getUpdates`
-   replacing `<TOKEN>` with the token from step 3. Find `"chat":{"id":…}` and
-   note that number. It may be negative — keep the minus sign.
-6. Back in the admin panel → **Settings → Telegram alerts**: paste the token
-   into **Bot token** and the number into **Chat ID**. Click **Save**.
-7. Click **Send a test message**.
+4. In the admin panel → **Connections** → **Telegram** → paste it into
+   **Bot token** → **Save token**.
+5. **Open a chat with your new bot and send it any message, e.g. "hello".**
+   This step is not optional — Telegram does not let a bot start a
+   conversation.
+6. Back on the card press **Detect my chat**. Click **Use this** next to your
+   name. The panel sends a test message as soon as you do.
 
-**Verify:** a message from the bot arrives in Telegram saying alerts are
-working. If the panel says "chat not found", step 4 was missed — go back and
-message the bot, then try again.
+**Verify:** a message from the bot arrives in Telegram and the card shows
+**Connected**. If the card says the bot cannot message the chat, step 5 was
+missed — message the bot, then Detect again.
 
 ────────────────────────────────────────────────────────────
 TASK 5 — Google Search Console: submit the updated sitemap
@@ -185,16 +181,16 @@ lead notification emails break immediately.
    **Change password**.
 2. Generate a strong password (20+ characters, mixed case, digits, symbols).
    **Show it to me in your reply** so I can store it. Save it in hPanel.
-3. Immediately go to the admin panel → **Settings → Mailbox**, paste the new
-   password into the field labelled **"Mailbox password"**, and click
-   **Save mailbox settings**.
-4. Click **Send me a test email** and confirm it reports success.
-5. Then go to **Settings → Reading replies**, paste the same new password,
-   click **Save**, and click **Check for replies now**.
+3. Immediately go to the admin panel → **Connections** → the card
+   **Email — sending** → paste the new password into **Mailbox password** and
+   click **Save**. The panel tests the login before it saves; the card should
+   say **Connected** and a test email goes to the signed-in address.
+4. Then the card **Email — reading replies** → paste the same password →
+   **Save** → **Check the mailbox**.
 
-**Verify:** both the test email and the reply check succeed. If either fails,
-tell me the exact error before doing anything else — do not try a different
-password.
+**Verify:** both cards show **Connected**. If either shows **Error**, tell me
+the exact sentence under it before doing anything else — the old password is
+still in use until a test passes, so nothing is broken yet.
 
 ────────────────────────────────────────────────────────────
 TASK 7 — Rotate the SSH password
@@ -216,10 +212,10 @@ TASK 8 — Rotate the Anthropic API key
    **<your-google-account>**. If that account has no access to the
    organisation holding the key, stop and tell me.
 2. **API keys** → create a new key, name it `wwwebtech-panel`. Copy it.
-3. In the admin panel go to **Blog** → the **How it is set up** section →
-   paste the new key into the field labelled **"Anthropic API key"** → click
-   **Save**.
-4. Click **Check the key works**. It must report success.
+3. In the admin panel go to **Connections** → **Claude (Anthropic)** → paste
+   the new key into **API key** → **Save**. Because the old key works, the
+   panel tests the new one before replacing it.
+4. Click **Test**. The card must show **Connected**.
 5. Only after that succeeds, go back to the Anthropic console and **revoke
    the old key** — the one that is not named `wwwebtech-panel`.
 
@@ -234,9 +230,9 @@ TASK 9 — Rotate the PageSpeed API key
    **<your-google-account>**.
 2. Create a new API key. Restrict it to the **PageSpeed Insights API** only.
    Copy it.
-3. In the admin panel go to **SEO health**, paste the new key into the field
-   labelled **"PageSpeed API key"**, and click **Save**.
-4. Click **Run the daily checks**. It should complete and report the checks.
+3. In the admin panel go to **Connections** → **PageSpeed Insights** → paste
+   the new key into **API key** → **Save**.
+4. Click **Test**. The card shows the homepage's mobile score.
 5. Only after that succeeds, delete the old PageSpeed key in the Google
    console.
 

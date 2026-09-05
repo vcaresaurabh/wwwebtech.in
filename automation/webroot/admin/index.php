@@ -13,7 +13,7 @@ require __DIR__ . '/_layout.php';
 
 $page = gets('p', 'dashboard', [
     'dashboard', 'login', 'logout', 'leads', 'lead', 'analytics',
-    'funnel', 'conversations', 'landing', 'audits',
+    'funnel', 'conversations', 'landing', 'audits', 'connections',
     'blog', 'seo', 'integrations', 'settings', 'setup',
 ]);
 

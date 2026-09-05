@@ -222,6 +222,130 @@ anything or emailing anyone — useful before a sales call.
 
 ---
 
+## Connecting things
+
+**Connections** is the one page where every credential the site needs is
+entered, tested and rotated. Nothing there ever shows a saved secret back to
+you — you see the last four characters, who set it and when, and a Replace
+or Remove button. Each card has the same parts:
+
+- A **status pill**: *Not configured* (nothing entered), *Configured —
+  untested* (entered, never proven), *Connected* (a real test passed, with
+  the time), or *Error* (the last check failed, with the reason in plain
+  words and a "How to fix" link that opens the right step).
+- **How to set this up** — numbered steps written for someone who has never
+  opened the other site, with exact menu paths and what each value looks
+  like. It opens automatically on a card that is not configured.
+- The **fields**, which check the shape of what you paste before the Test
+  button will even work.
+- **Test** — a real call to the service, never "saved successfully". The
+  result lists each thing it checked with a tick or a cross.
+- A **switch**, where the feature can be on or off, that unlocks only after
+  one test has passed.
+
+**A failed test never breaks a working connection.** If you paste a new
+password or token and the test fails, the old one stays in use and the new
+one waits. You can fix it and try again, or press *Save anyway*.
+
+You can test each connection once every thirty seconds.
+
+### Email — sending
+
+Pick your provider (Hostinger, Google, Zoho, Microsoft) and the server
+details fill in. The password is the mailbox's own — from hPanel → Emails
+for a Hostinger mailbox; Gmail needs an App Password. Press **Send me a
+test**: a real email goes to the address you are signed in with, and the
+result says whether the server accepted the login and, where the reading
+mailbox is set up, whether the message passed SPF and DKIM on arrival.
+
+The **DNS strip** at the top shows SPF, DKIM and DMARC for your domain,
+re-checked daily. For anything missing it shows the exact record to add in
+hPanel → Domains → DNS. Most inboxes decide "spam or not" on those three.
+
+You can add a second mailbox — a `no-reply@` for system notices, say — and
+choose what each is used for: system notices, follow-up messages, replies
+you send.
+
+### Email — reading replies
+
+Same mailbox the follow-ups are sent from. **Check the mailbox** signs in,
+counts unread mail and shows the three most recent subjects so you can see
+it is the right one. The five-minute job reads new mail from here and
+attaches replies to the right lead. This is the part that keeps the
+automation polite: a reply is what stops a sequence.
+
+### Alert recipients
+
+Every address that should hear about leads, each choosing what it gets:
+*every lead*, *hot leads only*, the *daily digest*, or *system errors*.
+Add your phone's email or a colleague without touching anything else.
+**Send test** proves it arrives.
+
+### Telegram
+
+1. In Telegram, open **@BotFather**, send `/newbot`, name it, give it a
+   username ending in `bot`, copy the token.
+2. Paste the token and press **Save token**.
+3. **Open your new bot and press Start** — until you do, Telegram will not
+   let the bot message you.
+4. Press **Detect my chat**. The panel lists everyone who has messaged the
+   bot; click yourself. For a team group: create it, add the bot, send one
+   message in the group, then Detect. Group IDs are negative — that is
+   normal.
+5. **Send a test.** A message arrives on your phone within a second.
+
+Each chat chooses *all alerts*, *hot leads only* or *approval requests
+only*.
+
+### WhatsApp
+
+Six values from Meta, and the card walks you through each: business
+verification (days to weeks; the switch stays off until you record it as
+verified), a dedicated number, the App ID and App Secret, a permanent
+System User token (the one from the Graph API Explorer expires in 24 hours
+— do not use it), the two IDs, and the webhook. The card shows the
+**Callback URL** and **Verify token** to paste into Meta and flips to
+"Webhook verified" the moment Meta calls it. **Sync from Meta** pulls the
+template list with its approval status; only *approved* templates in the
+*utility* category can be sent automatically.
+
+When a customer replies on WhatsApp it lands on their thread in
+Conversations and stops their sequence, exactly as an email reply does.
+
+The card shows this month's spend against the cap. Replies inside the
+24-hour window are free until 30 September 2026; from 1 October roughly
+₹0.115 a message in India.
+
+### Claude (Anthropic)
+
+The key from console.anthropic.com → API keys, the model, and the monthly
+cap with a live meter. **Test** costs a fraction of a cent and names the
+model that answered. Set a spend limit in the Anthropic console as well —
+two caps are better than one.
+
+### PageSpeed Insights
+
+A free key from Google Cloud → Credentials, restricted to the PageSpeed
+Insights API. **Test** measures this site's homepage and shows the score.
+
+### Feed & test keys
+
+Two keys the site generates for itself: the one Google and Microsoft use to
+fetch offline conversions (rotate it and copy the new URLs from
+Integrations into both platforms), and the one that marks a form
+submission as a test. The four cron lines are shown for reference; they
+contain no key and never change.
+
+### The daily check
+
+Every morning the panel checks every configured connection without
+sending anything. A connection that was fine yesterday and is broken today
+turns red, the Connections item in the menu gets a dot, the Dashboard says
+which, and you are told on every channel that still works — by email if
+Telegram broke, by Telegram if email broke.
+
+---
+
 ## Integrations
 
 Where you add Google Analytics, Meta Pixel, Search Console verification and
@@ -248,16 +372,13 @@ site**. **Remove everything** puts every page back exactly as it was.
 - **Mailbox.** Where enquiries are sent from and to, and the reply promise
   used in the acknowledgement. Keep that wording identical to what the website
   says.
-- **Follow-up and scoring.** Who the follow-up messages appear to come from,
-  where you get alerted, and the score thresholds that decide hot, warm and
-  cold. The panel shows how your last ninety days actually split — if nearly
-  everything is one band, move the threshold. See FUNNEL-SETUP.md.
-- **Telegram alerts.** Free, internal, and the fastest way to hear about a
-  lead. Message your bot once before saving, or Telegram refuses.
-- **WhatsApp.** Off unless you set it up. The monthly cap is a hard stop, not a
-  warning. See WHATSAPP-SETUP.md.
-- **Reading replies.** The mailbox the panel checks for replies. This is what
-  stops a sequence when someone answers, so it is worth the five minutes.
+- **Follow-up and scoring.** Who the follow-up messages appear to come from
+  and the score thresholds that decide hot, warm and cold. The panel shows
+  how your last ninety days actually split — if nearly everything is one
+  band, move the threshold. See FUNNEL-SETUP.md.
+- **Connections** (its own page) holds the mailbox, the reply reader, alert
+  addresses, Telegram, WhatsApp, the AI key, PageSpeed and the feed keys —
+  see "Connecting things" above.
 - **Data retention.** How long individual visit records are kept. Daily totals
   are kept forever regardless.
 
@@ -268,12 +389,12 @@ site**. **Remove everything** puts every page back exactly as it was.
 | What you see | What it usually means |
 |---|---|
 | A job shows **fail** on the Dashboard | The message beside it says why. Most often a password changed. |
-| A lead says **not emailed** | The mailbox password changed. Settings → Mailbox → Send me a test email. |
+| A lead says **not emailed** | The mailbox password changed. Connections → Email — sending → Send me a test. |
 | Analytics stopped at a date | Settings → *Collect analytics* got unticked, or the site was redeployed without `wa.js`. |
 | The blog stopped | The monthly cap was reached, the API key expired, or the topic queue is empty. The Blog page says which. |
 | SEO health reports a failure | Read the line. It is describing something real on the live site. |
 | Messages pile up in **Waiting for your approval** | Working as intended. Nothing sends until you read it. |
-| Someone replied but the sequence carried on | Settings → Reading replies is not configured, or the mailbox password changed. Mark the lead *Contacted* to stop it by hand. |
+| Someone replied but the sequence carried on | Connections → Email — reading replies is not connected, or the password changed. Mark the lead *Contacted* to stop it by hand. |
 | An audit says **failed** | The site did not answer — a typo, a site that is down, or a firewall that blocks anything that is not a person. |
 | WhatsApp stopped sending | The monthly cap was reached. The Funnel page shows the figure. It falls back to email on its own. |
 
